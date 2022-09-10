@@ -42,5 +42,5 @@ vignettes/*.pdf
 # .DS_Store
 .DS_Store
 
-# mortality files
-data/mortality/
+# wbgt large files
+data/wbgt/*

@@ -1,17 +1,20 @@
-# TITLE HERE
-Work in progress by Robbie M Parks
+# Temperature and prisons in the United States
 
-PROJECT DESCRIPTION HERE
+Robbie M Parks, Cascade Tuholske
+
+## Introduction
+
+Work in progress by Robbie M Parks, Cascade Tuholske
 
 ## Code (in progress)
 
 ### Data preparation (data_prep) list:
 
-a_XX_prepare_XX_data - prepare XX data
+a_01_prepare_wbgt_data - prepare WBGT data
 
 ### Data exploration (data_exploration) list:
 
-b_XX_explore_XX_data - explore XX data
+b_01_explore_wbgt_data - explore WBGT data
 
 ### Model running (models) list:
 

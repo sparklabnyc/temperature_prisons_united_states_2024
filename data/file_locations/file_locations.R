@@ -1,3 +1,3 @@
 # list of important file locations to avoid having to repeat every time loading files
-raw_mortalty_data = "XX"
+raw_wgbt_data = "~/git/PRISM-grids-into-FIPS-ZIP-censustract-USA/output/prison/wbgtmax/"
 

@@ -1,0 +1,31 @@
+---
+title: "Process WBGT data"
+output: html_document
+---
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Iterate across years of WBGT data and combine into one large file
+```{r}
+dat.all = data.frame()
+for(year in years_wbgtmax){
+  print(paste0('Loading ',year))
+  dat.current = readRDS(paste0(raw_wgbt_data,'weighted_area_raster_prison_wbgtmax_daily_',year,'.rds'))
+  dat.all= data.table::rbindlist(list(dat.all,dat.current))
+  print(paste0('Loaded ',year))
+}
+```
+## Sort by prison then year
+```{r}
+
+```
+
+## Save large file
+```{r}
+saveRDS(dat.all,paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'.rds'))
+```
