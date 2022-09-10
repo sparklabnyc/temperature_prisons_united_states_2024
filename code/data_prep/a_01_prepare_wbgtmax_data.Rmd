@@ -20,10 +20,6 @@ for(year in years_wbgtmax){
   print(paste0('Loaded ',year))
 }
 ```
-## Sort by prison then year
-```{r}
-
-```
 
 ## Save large file
 ```{r}

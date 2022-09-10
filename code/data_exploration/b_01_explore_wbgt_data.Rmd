@@ -1,0 +1,42 @@
+---
+title: "Explore WBGT data"
+output: html_document
+---
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load prison WBGT file
+```{r}
+dat.wbgt = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'.rds'))
+```
+
+## Number of days per year above or equal to 25C
+```{r}
+dat.wbgt.summarised = dat.wbgt %>%
+  mutate(wbgt_25=ifelse(wbgtmax>25,1,0),wbgt_30=ifelse(wbgtmax>30,1,0),wbgt_35=ifelse(wbgtmax>35,1,0)) %>%
+  group_by(prison_id, year) %>%
+  summarise(wbgt_25=sum(wbgt_25), wbgt_30=sum(wbgt_30), wbgt_35=sum(wbgt_35))
+```
+
+## Trends in growth of number of day per year over time
+```{r}
+dat.wbgt.summarised.regression = dat.wbgt.summarised %>%
+  mutate(year=as.numeric(year)) %>%
+  group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_25 ~ year, data = .))) %>%
+  filter(term=='year') %>%
+  select(prison_id,estimate) %>%
+  mutate(wbgt_total_fitted_first_last_change=estimate*(length(years_wbgtmax))) %>%
+  rename(annual_change=estimate) %>%
+  select(prison_id,annual_change,wbgt_total_fitted_first_last_change)
+```
+
+## Save regression file
+```{r}
+saveRDS(dat.wbgt.summarised.regression,paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```
