@@ -1,0 +1,95 @@
+---
+title: "Prepare WBGT summary data"
+output: html_document
+---
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load prison WBGT file
+```{r}
+dat.wbgt = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'.rds'))
+```
+
+## Number of days per year above or equal to 25C
+```{r}
+dat.wbgt.summarised = dat.wbgt %>%
+  mutate(wbgt_25=ifelse(wbgtmax>25,1,0),wbgt_27=ifelse(wbgtmax>27,1,0),
+         wbgt_30=ifelse(wbgtmax>30,1,0),wbgt_35=ifelse(wbgtmax>35,1,0)) %>%
+  group_by(prison_id, year) %>%
+  summarise(wbgt_25=sum(wbgt_25), wbgt_27=sum(wbgt_27), wbgt_30=sum(wbgt_30), wbgt_35=sum(wbgt_35))
+```
+
+## Take Number of days in first and last year of data
+```{r}
+dat.wbgt.summarised.start = dat.wbgt.summarised %>%
+  filter(year%in%c(start_year_wbgt)) %>%
+  select(-year) %>%
+  dplyr::rename_with(~ paste0(., "_", start_year_wbgt), -prison_id)
+
+dat.wbgt.summarised.end = dat.wbgt.summarised %>%
+  filter(year%in%c(end_year_wbgt)) %>%
+  select(-year) %>%
+  dplyr::rename_with(~ paste0(., "_", end_year_wbgt), -prison_id)
+```
+
+## Trends in growth of number of day per year over time
+```{r}
+dat.wbgt.summarised.regression.25 = dat.wbgt.summarised %>%
+  mutate(year=as.numeric(year)) %>%
+  group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_25 ~ year, data = .))) %>%
+  filter(term=='year') %>%
+  select(prison_id,estimate) %>%
+  mutate(total_change_wbgt_25=estimate*(length(years_wbgtmax))) %>%
+  rename(annual_change_wbgt_25=estimate) %>%
+  select(prison_id,annual_change_wbgt_25,total_change_wbgt_25)
+
+dat.wbgt.summarised.regression.27 = dat.wbgt.summarised %>%
+  mutate(year=as.numeric(year)) %>%
+  group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_27 ~ year, data = .))) %>%
+  filter(term=='year') %>%
+  select(prison_id,estimate) %>%
+  mutate(total_change_wbgt_27=estimate*(length(years_wbgtmax))) %>%
+  rename(annual_change_wbgt_27=estimate) %>%
+  select(prison_id,annual_change_wbgt_27,total_change_wbgt_27)
+
+dat.wbgt.summarised.regression.30 = dat.wbgt.summarised %>%
+  mutate(year=as.numeric(year)) %>%
+  group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_30 ~ year, data = .))) %>%
+  filter(term=='year') %>%
+  select(prison_id,estimate) %>%
+  mutate(total_change_wbgt_30=estimate*(length(years_wbgtmax))) %>%
+  rename(annual_change_wbgt_30=estimate) %>%
+  select(prison_id,annual_change_wbgt_30,total_change_wbgt_30)
+
+dat.wbgt.summarised.regression.35 = dat.wbgt.summarised %>%
+  mutate(year=as.numeric(year)) %>%
+  group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_35 ~ year, data = .))) %>%
+  filter(term=='year') %>%
+  select(prison_id,estimate) %>%
+  mutate(total_change_wbgt_35=estimate*(length(years_wbgtmax))) %>%
+  rename(annual_change_wbgt_35=estimate) %>%
+  select(prison_id,annual_change_wbgt_35,total_change_wbgt_35)
+```
+
+## Merge regression analyses into one data frame
+```{r}
+dat.wbgt.summarised.regression.merged = left_join(dat.wbgt.summarised.start,dat.wbgt.summarised.end) %>%
+  left_join(.,dat.wbgt.summarised.regression.25) %>%
+  left_join(.,dat.wbgt.summarised.regression.27) %>%
+  left_join(.,dat.wbgt.summarised.regression.30) %>%
+  left_join(.,dat.wbgt.summarised.regression.35)
+```
+
+## Save regression file
+```{r}
+saveRDS(dat.wbgt.summarised.regression.merged,paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```

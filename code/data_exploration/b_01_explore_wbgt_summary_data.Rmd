@@ -1,0 +1,155 @@
+---
+title: "Explore WBGT summary data"
+output: html_document
+---
+
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load specific plotting packages
+```{r, message=FALSE}
+# load required packages
+library(data.table)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(raster)
+library(sp)
+library(plyr)
+library(graticule)
+library(zoo)
+library(purrr)
+```
+
+## Load WBGT regression file
+```{r}
+dat.wbgt.summarised.regression = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```
+
+## Prepare map structure
+```{r}
+# for map theme to plot in ggplot
+theme_map = function(base_size=15, base_family=""){
+    require(grid)
+    theme_bw(base_size=base_size,base_family=base_family) %+replace%
+    theme(axis.line=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    axis.title=element_blank(),
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid=element_blank(),
+    panel.margin=unit(0,"lines"),
+    plot.background=element_blank(),
+    legend.position = 'bottom'
+    )
+}
+```
+
+## Load US prison shapefile for mapping
+```{r}
+# load shapefile of entire United States by prison
+us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
+                           layer="Prison_Boundaries_Edited")
+
+us.main = spTransform(us.main, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+# fortify to prepare for plotting in ggplot
+map = fortify(us.main)
+
+# extract data from shapefile
+us.main@data$id = rownames(us.main@data) 
+shapefile.data = us.main@data
+
+# merge selected data to map_create dataframe for colouring of ggplot
+USA.df = merge(map, shapefile.data, by='id')
+USA.df$prison_id = as.integer(as.character(USA.df$FID))
+```
+
+## Load US state shapefile for mapping
+```{r}
+us = readOGR(dsn=paste0(data.folder,"shapefiles/states"),layer="states")
+
+# reproject shapefile
+us_aea = spTransform(us, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+us_aea = us
+us_aea@data$id = rownames(us_aea@data)
+
+# only keep mainland US States
+us_aea = us_aea[us_aea$STATE_FIPS %in% states_included,]
+us_aea = spTransform(us_aea, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+us_aea = fortify(us_aea)
+```
+
+## Prepare summary maps
+```{r}
+# merge map with mean values
+USA.df.merged = left_join(USA.df,dat.wbgt.summarised.regression,by='prison_id')
+USA.df.merged = with(USA.df.merged, USA.df.merged[order(id,order),])
+```
+
+## Choose threshold to plot
+```{r}
+threshold_chosen = 25
+```
+
+## Prepare colors and legends of maps
+```{r}
+legend_create_annual_change = function(threshold)(paste0('Annual change in annual number of days over WBGT ', threshold ,'°C'))
+legend_create_total_change = function(threshold)(paste0('Total change in annual number of days over WBGT ', threshold ,'°C'))
+```
+
+## Plot annual change map 
+```{r}
+plot.annual.change = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('annual_change_wbgt_',threshold_chosen))),size=2) +
+    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_annual_change(threshold_chosen)),legend.text=element_text(size=10)) +
+    scale_color_gradient2(low='dark blue',mid='#FAF9F6',high='dark red') +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+
+pdf(paste0(wbgtmax.folder,'map_annual_change_wbgtmax_days_over_',threshold_chosen,'.pdf'),paper='a4r',height=0,width=0)
+print(plot.annual.change)
+dev.off()
+
+plot.annual.change
+```
+
+## Plot total change map 
+```{r}
+plot.total.change = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_wbgt_',threshold_chosen))),size=2) +
+    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_total_change(threshold_chosen)),legend.text=element_text(size=10)) +
+    scale_color_gradient2(low='dark blue',mid='#FAF9F6',high='dark red') +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+
+pdf(paste0(wbgtmax.folder,'map_total_change_wbgtmax_days_over_',threshold_chosen,'.pdf'),paper='a4r',height=0,width=0)
+print(plot.total.change)
+dev.off()
+
+plot.annual.change
+```

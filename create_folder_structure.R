@@ -18,6 +18,7 @@ project.folder = paste0(print(here::here()),'/')
     objects.folder = paste0(data.folder, "objects/")
   output.folder = paste0(project.folder, "output/")
   figures.folder = paste0(project.folder, "figures/")
+    wbgtmax.folder = paste0(figures.folder, "wbgtmax/")
   tables.folder = paste0(project.folder, "tables/")
   reports.folder = paste0(project.folder, "reports/")
 

@@ -12,9 +12,11 @@ Work in progress by Robbie M Parks, Cascade Tuholske
 
 a_01_prepare_wbgt_data - prepare WBGT data
 
+a_02_prepare_wbgt_summary_data - prepare WBGT summary data
+
 ### Data exploration (data_exploration) list:
 
-b_01_explore_wbgt_data - explore WBGT data
+b_01_explore_wbgt_summary_data - explore WBGT summary data with plots and maps
 
 ### Model running (models) list:
 
