@@ -106,6 +106,13 @@ threshold_chosen = 25
 ```{r}
 legend_create_annual_change = function(threshold)(paste0('Annual change in annual number of days over WBGT ', threshold ,'°C'))
 legend_create_total_change = function(threshold)(paste0('Total change in annual number of days over WBGT ', threshold ,'°C'))
+legend_create_person_days_total_change = function(threshold)(paste0('Total change in annual number of person-days over WBGT ', threshold ,'°C'))
+```
+
+## Only take open prisons and whose population we know
+```{r}
+USA.df.merged = USA.df.merged %>% 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > -999) 
 ```
 
 ## Plot annual change map 
@@ -152,4 +159,34 @@ print(plot.total.change)
 dev.off()
 
 plot.annual.change
+```
+
+## Obtain population-weighted WGBT change values
+```{r}
+USA.df.merged = USA.df.merged %>%
+  mutate(total_change_person_days = POPULATION * get(paste0('total_change_wbgt_',threshold_chosen)))
+```
+
+## Plot total person-days change map 
+```{r}
+plot.total.person.days.change = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=total_change_person_days),size=2) +
+    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 20,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_person_days_total_change(threshold_chosen)),
+           legend.text=element_text(size=8)) + 
+    scale_color_gradient2(low='dark blue',mid='#FAF9F6',high='dark red') +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+
+pdf(paste0(wbgtmax.folder,'map_total_change_wbgtmax_person_days_over_',threshold_chosen,'.pdf'),paper='a4r',height=0,width=0)
+print(plot.total.person.days.change)
+dev.off()
+
+plot.total.person.days.change
 ```
