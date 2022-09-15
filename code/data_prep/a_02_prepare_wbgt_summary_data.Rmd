@@ -18,10 +18,10 @@ dat.wbgt = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily
 ## Number of days per year above or equal to 25C
 ```{r}
 dat.wbgt.summarised = dat.wbgt %>%
-  mutate(wbgt_25=ifelse(wbgtmax>25,1,0),wbgt_27=ifelse(wbgtmax>27,1,0),
+  mutate(wbgt_25=ifelse(wbgtmax>25,1,0),wbgt_28=ifelse(wbgtmax>28,1,0),
          wbgt_30=ifelse(wbgtmax>30,1,0),wbgt_35=ifelse(wbgtmax>35,1,0)) %>%
   group_by(prison_id, year) %>%
-  summarise(wbgt_25=sum(wbgt_25), wbgt_27=sum(wbgt_27), wbgt_30=sum(wbgt_30), wbgt_35=sum(wbgt_35))
+  summarise(wbgt_25=sum(wbgt_25), wbgt_28=sum(wbgt_28), wbgt_30=sum(wbgt_30), wbgt_35=sum(wbgt_35))
 ```
 
 ## Take Number of days in first and last year of data
@@ -49,15 +49,15 @@ dat.wbgt.summarised.regression.25 = dat.wbgt.summarised %>%
   rename(annual_change_wbgt_25=estimate) %>%
   select(prison_id,annual_change_wbgt_25,total_change_wbgt_25)
 
-dat.wbgt.summarised.regression.27 = dat.wbgt.summarised %>%
+dat.wbgt.summarised.regression.28 = dat.wbgt.summarised %>%
   mutate(year=as.numeric(year)) %>%
   group_by(prison_id) %>%
-  do(broom::tidy(lm(wbgt_27 ~ year, data = .))) %>%
+  do(broom::tidy(lm(wbgt_28 ~ year, data = .))) %>%
   filter(term=='year') %>%
   select(prison_id,estimate) %>%
-  mutate(total_change_wbgt_27=estimate*(length(years_wbgtmax))) %>%
-  rename(annual_change_wbgt_27=estimate) %>%
-  select(prison_id,annual_change_wbgt_27,total_change_wbgt_27)
+  mutate(total_change_wbgt_28=estimate*(length(years_wbgtmax))) %>%
+  rename(annual_change_wbgt_28=estimate) %>%
+  select(prison_id,annual_change_wbgt_28,total_change_wbgt_28)
 
 dat.wbgt.summarised.regression.30 = dat.wbgt.summarised %>%
   mutate(year=as.numeric(year)) %>%
@@ -84,7 +84,7 @@ dat.wbgt.summarised.regression.35 = dat.wbgt.summarised %>%
 ```{r}
 dat.wbgt.summarised.regression.merged = left_join(dat.wbgt.summarised.start,dat.wbgt.summarised.end) %>%
   left_join(.,dat.wbgt.summarised.regression.25) %>%
-  left_join(.,dat.wbgt.summarised.regression.27) %>%
+  left_join(.,dat.wbgt.summarised.regression.28) %>%
   left_join(.,dat.wbgt.summarised.regression.30) %>%
   left_join(.,dat.wbgt.summarised.regression.35)
 ```

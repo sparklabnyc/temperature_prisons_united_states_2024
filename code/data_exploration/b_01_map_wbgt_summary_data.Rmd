@@ -97,16 +97,12 @@ USA.df.merged = left_join(USA.df,dat.wbgt.summarised.regression,by='prison_id')
 USA.df.merged = with(USA.df.merged, USA.df.merged[order(id,order),])
 ```
 
-## Choose threshold to plot
-```{r}
-threshold_chosen = 25
-```
-
 ## Prepare colors and legends of maps
 ```{r}
-legend_create_annual_change = function(threshold)(paste0('Annual change in annual number of days over WBGT ', threshold ,'°C'))
-legend_create_total_change = function(threshold)(paste0('Total change in annual number of days over WBGT ', threshold ,'°C'))
-legend_create_person_days_total_change = function(threshold)(paste0('Total change in annual number of person-days over WBGT ', threshold ,'°C'))
+legend_create_count_start_year = function(threshold)(paste0(start_year_wbgt))
+legend_create_count_end_year = function(threshold)(paste0(end_year_wbgt))
+legend_create_annual_change = function(threshold)(paste0('Annual change'))
+legend_create_total_change = function(threshold)(paste0('Total change'))
 ```
 
 ## Only take open prisons and whose population we know
@@ -115,14 +111,41 @@ USA.df.merged = USA.df.merged %>%
   filter(STATUS=='OPEN') %>% filter(POPULATION > -999) 
 ```
 
-## Plot annual change map 
+## Plot count in start year map 
 ```{r}
-plot.annual.change = ggplot() +
+plot_start_year = function(threshold_chosen,legend_chosen=0){
+  ggplot() +
     geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
-    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('annual_change_wbgt_',threshold_chosen))),size=2) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt))),size=2) +
     guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
-                                  title = legend_create_annual_change(threshold_chosen)),legend.text=element_text(size=10)) +
-    scale_color_gradient2(low='dark blue',mid='#FAF9F6',high='dark red') +
+                                  title = legend_create_count_start_year(threshold_chosen)),legend.text=element_text(size=10)) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Tiepolo')), limits = c(0,max(USA.df.merged$wbgt_25_1981))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    ggtitle(paste0(threshold_chosen,'°C')) + 
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+
+}
+
+plot.count.start.year.25 = plot_start_year(25)
+plot.count.start.year.28 = plot_start_year(28)
+plot.count.start.year.30 = plot_start_year(30)
+```
+
+## Plot count in end year map 
+```{r}
+plot_end_year = function(threshold_chosen){
+  ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',end_year_wbgt))),size=2) +
+    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_end_year(threshold_chosen)),legend.text=element_text(size=10)) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Tiepolo')), limits = c(0,max(USA.df.merged$wbgt_25_1981))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
     theme(panel.grid.major = element_blank(),
         axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
@@ -131,21 +154,22 @@ plot.annual.change = ggplot() +
         legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
     theme_map()
 
-pdf(paste0(wbgtmax.folder,'map_annual_change_wbgtmax_days_over_',threshold_chosen,'.pdf'),paper='a4r',height=0,width=0)
-print(plot.annual.change)
-dev.off()
+}
 
-plot.annual.change
+plot.count.end.year.25 = plot_end_year(25)
+plot.count.end.year.28 = plot_end_year(28)
+plot.count.end.year.30 = plot_end_year(30)
 ```
 
 ## Plot total change map 
 ```{r}
-plot.total.change = ggplot() +
+plot_total_change = function(threshold_chosen){
+  ggplot() +
     geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
     geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_wbgt_',threshold_chosen))),size=2) +
     guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
                                   title = legend_create_total_change(threshold_chosen)),legend.text=element_text(size=10)) +
-    scale_color_gradient2(low='dark blue',mid='#FAF9F6',high='dark red') +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Nizami')), limits = c(-1*max(USA.df.merged$total_change_wbgt_25),max(USA.df.merged$total_change_wbgt_25))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
     theme(panel.grid.major = element_blank(),
         axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
@@ -153,40 +177,23 @@ plot.total.change = ggplot() +
         panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
         legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
     theme_map()
+}
 
-pdf(paste0(wbgtmax.folder,'map_total_change_wbgtmax_days_over_',threshold_chosen,'.pdf'),paper='a4r',height=0,width=0)
-print(plot.total.change)
+plot.total.change.25 = plot_total_change(25)
+plot.total.change.28 = plot_total_change(28)
+plot.total.change.30 = plot_total_change(30)
+```
+
+## Place on single gridded plot
+```{r}
+pdf(paste0(wbgtmax.folder,'Figure_1_in_progress.pdf'),paper='a4r',width=0,height=0)
+gridExtra::grid.arrange(plot.count.start.year.25,plot.count.start.year.28,plot.count.start.year.30,
+                        plot.total.change.25,plot.total.change.28,plot.total.change.30,
+                        nrow=2)
 dev.off()
 
-plot.annual.change
+gridExtra::grid.arrange(plot.count.start.year.25,plot.count.start.year.28,plot.count.start.year.30,
+                        plot.total.change.25,plot.total.change.28,plot.total.change.30,
+                        nrow=2)
 ```
 
-## Obtain population-weighted WGBT change values
-```{r}
-USA.df.merged = USA.df.merged %>%
-  mutate(total_change_person_days = POPULATION * get(paste0('total_change_wbgt_',threshold_chosen)))
-```
-
-## Plot total person-days change map 
-```{r}
-plot.total.person.days.change = ggplot() +
-    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
-    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=total_change_person_days),size=2) +
-    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 20,barheight = 1,title.vjust = 0.8, 
-                                  title = legend_create_person_days_total_change(threshold_chosen)),
-           legend.text=element_text(size=8)) + 
-    scale_color_gradient2(low='dark blue',mid='#FAF9F6',high='dark red') +
-    coord_fixed() + xlab('') + ylab('') + theme_bw() +
-    theme(panel.grid.major = element_blank(),
-        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
-        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
-        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
-        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
-    theme_map()
-
-pdf(paste0(wbgtmax.folder,'map_total_change_wbgtmax_person_days_over_',threshold_chosen,'.pdf'),paper='a4r',height=0,width=0)
-print(plot.total.person.days.change)
-dev.off()
-
-plot.total.person.days.change
-```

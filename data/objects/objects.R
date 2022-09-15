@@ -1,6 +1,6 @@
 # list of objects used across different scripts
-start_year_wbgt = 1982
-end_year_wbgt = 2020
+start_year_wbgt = 1981
+end_year_wbgt = 2021
 years_wbgtmax = c(start_year_wbgt:end_year_wbgt)
 
 # states included in analysis

@@ -1,0 +1,87 @@
+---
+title: "Explore WBGT summary data"
+output: html_document
+---
+
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load specific plotting packages
+```{r, message=FALSE}
+# load required packages
+library(data.table)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(raster)
+library(sp)
+library(plyr)
+library(graticule)
+library(zoo)
+library(purrr)
+```
+
+## Load WBGT regression file
+```{r}
+dat.wbgt.summarised.regression = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```
+
+## Load US prison shapefile for data
+```{r}
+# load shapefile of entire United States by prison
+us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
+                           layer="Prison_Boundaries_Edited")
+
+us.main.data = us.main@data %>%
+  dplyr::select(FID,STATUS,STATE,POPULATION) %>%
+  dplyr::rename(prison_id=FID,status=STATUS,state=STATE,population=POPULATION)
+  
+```
+
+## Merge prison data
+```{r}
+dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,us.main.data) %>%
+  dplyr::filter(status=='OPEN') %>% filter(population > -999) 
+```
+
+## Scatter plot
+```{r}
+scatter_plot = function(threshold_chosen){
+  ggplot() +
+    geom_point(data=dat.wbgt.summarised.regression,aes(x=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt)),
+                                                         y=get(paste0('total_change_wbgt_',threshold_chosen)),color=state,size=population)) +
+    geom_hline(yintercept=0, linetype='dotted') + geom_vline(xintercept=0, linetype='dotted') +
+    xlim(c(0,200)) + ylim(c(-50,70)) + 
+    coord_fixed() + xlab(paste0(start_year_wbgt)) + ylab(paste0('Total change',start_year_wbgt,'-',end_year_wbgt)) + theme_bw() +
+    ggtitle(paste0(threshold_chosen,'°C')) + 
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=0), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        plot.title = element_text(hjust = 0.5),
+        legend.position = 'none', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) 
+}
+
+scatter.25 = scatter_plot(25)
+scatter.28 = scatter_plot(28)
+scatter.30 = scatter_plot(30)
+```
+
+## Place on single gridded plot
+```{r}
+pdf(paste0(wbgtmax.folder,'Figure_2_in_progress.pdf'),paper='a4r',width=0,height=0)
+gridExtra::grid.arrange(scatter.25,scatter.28,scatter.30,
+                        nrow=1)
+dev.off()
+
+gridExtra::grid.arrange(scatter.25,scatter.28,scatter.30,
+                        nrow=1)
+```
