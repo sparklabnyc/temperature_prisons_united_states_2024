@@ -1,5 +1,5 @@
 ---
-title: "Explore WBGT summary data"
+title: "Plot change of WBGT over time by population size"
 output: html_document
 ---
 

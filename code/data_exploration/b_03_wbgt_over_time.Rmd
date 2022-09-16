@@ -1,0 +1,135 @@
+---
+title: "Plot WBGT summary data over time"
+output: html_document
+---
+
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load specific plotting packages
+```{r, message=FALSE}
+# load required packages
+library(data.table)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(raster)
+library(sp)
+library(plyr)
+library(graticule)
+library(zoo)
+library(purrr)
+```
+
+## Load WBGT file over time
+```{r}
+dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+```
+
+## Load US prison shapefile for data
+```{r}
+# load shapefile of entire United States by prison
+us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
+                           layer="Prison_Boundaries_Edited")
+
+us.main.data = us.main@data %>%
+  dplyr::select(FID,STATUS,STATE,POPULATION) %>%
+  dplyr::rename(prison_id=FID,status=STATUS,state=STATE,population=POPULATION)
+```
+
+## Merge prison data
+```{r}
+dat.wbgt.summarised = left_join(dat.wbgt.summarised,us.main.data) %>%
+  dplyr::filter(status=='OPEN') %>% filter(population > -999) 
+```
+
+## Add cumulative and emergent marker
+```{r}
+emerge_year = 2000
+
+dat.wbgt.summarised = dat.wbgt.summarised %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::mutate(wbgt_25_cumul=cumsum(wbgt_25)) %>%
+  dplyr::mutate(wbgt_28_cumul=cumsum(wbgt_28)) %>%
+  dplyr::mutate(wbgt_30_cumul=cumsum(wbgt_30)) %>%
+  dplyr::mutate(wbgt_35_cumul=cumsum(wbgt_35))
+
+dat.wbgt.emergent.25 = dat.wbgt.summarised %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::filter(cumall(wbgt_25==0)) %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::summarise(year_max=max(year)) %>%
+  dplyr::mutate(alpha_25=ifelse(year_max>=emerge_year,1,0.05)) %>%
+  dplyr::select(prison_id,alpha_25)
+
+dat.wbgt.emergent.28 = dat.wbgt.summarised %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::filter(cumall(wbgt_28==0)) %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::summarise(year_max=max(year)) %>%
+  dplyr::mutate(alpha_28=ifelse(year_max>=emerge_year,1,0.05)) %>%
+  dplyr::select(prison_id,alpha_28)
+
+dat.wbgt.emergent.30 = dat.wbgt.summarised %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::filter(cumall(wbgt_30==0)) %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::summarise(year_max=max(year)) %>%
+  dplyr::mutate(alpha_30=ifelse(year_max>=emerge_year,1,0.05)) %>%
+  dplyr::select(prison_id,alpha_30)
+
+dat.wbgt.summarised = dat.wbgt.summarised %>%
+  left_join(.,dat.wbgt.emergent.25,by='prison_id') %>%
+  left_join(.,dat.wbgt.emergent.28,by='prison_id') %>%
+  left_join(.,dat.wbgt.emergent.30,by='prison_id') %>%
+  dplyr::mutate(alpha_25=ifelse(is.na(alpha_25)==TRUE,0.05,alpha_25)) %>%
+  dplyr::mutate(alpha_28=ifelse(is.na(alpha_28)==TRUE,0.05,alpha_28)) %>%
+  dplyr::mutate(alpha_30=ifelse(is.na(alpha_25)==TRUE,0.05,alpha_30))
+```
+
+## Plot over time
+```{r}
+plot_over_time = function(threshold_chosen){
+  ggplot() +
+    geom_line(data=dat.wbgt.summarised,aes(x=year,
+    y=get(paste0('wbgt_',threshold_chosen)),
+    group=prison_id,alpha=get(paste0('alpha_',threshold_chosen)))) +
+    geom_point(data=dat.wbgt.summarised %>% dplyr::filter(get(paste0('alpha_',threshold_chosen))==1&get(paste0('wbgt_',threshold_chosen))>0),
+              aes(x=year,
+              y=get(paste0('wbgt_',threshold_chosen)),
+              group=prison_id,color=state)) +
+    ylim(c(0,250)) +
+    xlab('Year') + ylab(paste0('Count over ', threshold_chosen,'°C')) + 
+    theme_bw() +
+    ggtitle(paste0(threshold_chosen,'°C')) + 
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=0), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        plot.title = element_text(hjust = 0.5),
+        legend.position = 'none', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) 
+}
+
+plot.over.time.25 = plot_over_time(25)
+plot.over.time.28 = plot_over_time(28)
+plot.over.time.30 = plot_over_time(30)
+```
+
+## Place on single gridded plot
+```{r}
+pdf(paste0(wbgtmax.folder,'Figure_3_in_progress.pdf'),paper='a4r',width=0,height=0)
+gridExtra::grid.arrange(plot.over.time.25,plot.over.time.28,plot.over.time.30,
+                        nrow=1)
+dev.off()
+
+gridExtra::grid.arrange(plot.over.time.25,plot.over.time.28,plot.over.time.30,
+                        nrow=1)
+```
