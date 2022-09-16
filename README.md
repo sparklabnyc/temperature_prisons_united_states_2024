@@ -16,9 +16,11 @@ a_02_prepare_wbgt_summary_data - prepare WBGT summary data
 
 ### Data exploration (data_exploration) list:
 
-b_01_map_wbgt_summary_data - explore WBGT summary data with plots and maps
+b_01_map_wbgt_summary_data - explore WBGT summary data with maps
 
-b_02_scatter_wbgt_summary_data - explore WBGT summary data with plots and maps
+b_02_scatter_wbgt_summary_data - explore WBGT summary data with scatter
+
+b_03_wbgt_over_time - explore WGBT summary data over time
 
 ### Model running (models) list:
 
