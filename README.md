@@ -22,6 +22,8 @@ b_02_scatter_wbgt_summary_data - explore WBGT summary data with scatter
 
 b_03_wbgt_over_time - explore WGBT summary data over time
 
+b_04_compare_prisons_to_rest_of_state - compare prisons WBGT to the states that they reside in
+
 ### Model running (models) list:
 
 c_XX_run_XX_model - run XX model

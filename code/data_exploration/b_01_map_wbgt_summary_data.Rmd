@@ -27,6 +27,7 @@ library(plyr)
 library(graticule)
 library(zoo)
 library(purrr)
+library(cowplot)
 ```
 
 ## Load WBGT regression file
@@ -99,27 +100,25 @@ USA.df.merged = with(USA.df.merged, USA.df.merged[order(id,order),])
 
 ## Prepare colors and legends of maps
 ```{r}
-legend_create_count_start_year = function(threshold)(paste0(start_year_wbgt))
-legend_create_count_end_year = function(threshold)(paste0(end_year_wbgt))
-legend_create_annual_change = function(threshold)(paste0('Annual change'))
-legend_create_total_change = function(threshold)(paste0('Total change'))
+legend_create_count_start_year = function(threshold)(paste0('Number of days above threshold in ',start_year_wbgt))
+legend_create_count_end_year = function(threshold)(paste0('Number of days above threshold in ',end_year_wbgt))
+legend_create_annual_change = function(threshold)(paste0('Annual change during ',start_year_wbgt,'-',end_year_wbgt ))
+legend_create_total_change = function(threshold)(paste0('Total change in annual number of days above threshold during ',start_year_wbgt,'-',end_year_wbgt))
 ```
 
 ## Only take open prisons and whose population we know
 ```{r}
 USA.df.merged = USA.df.merged %>% 
-  filter(STATUS=='OPEN') %>% filter(POPULATION > -999) 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) 
 ```
 
 ## Plot count in start year map 
 ```{r}
 plot_start_year = function(threshold_chosen,legend_chosen=0){
-  ggplot() +
+  p = ggplot() +
     geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
-    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt))),size=2) +
-    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
-                                  title = legend_create_count_start_year(threshold_chosen)),legend.text=element_text(size=10)) +
-    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Tiepolo')), limits = c(0,max(USA.df.merged$wbgt_25_1981))) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt))),size=1) +
+    scale_color_gradientn(colors=(MetBrewer::met.brewer('OKeeffe2')), limits = c(0,max(USA.df.merged$wbgt_25_1981))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
     ggtitle(paste0(threshold_chosen,'°C')) + 
     theme(panel.grid.major = element_blank(),
@@ -128,24 +127,36 @@ plot_start_year = function(threshold_chosen,legend_chosen=0){
         panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
         plot.title = element_text(hjust = 0.5),
         legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
-    theme_map()
+    theme_map() + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+          guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_start_year(threshold_chosen)),legend.text=element_text(size=10))  
+    }
 
+  return(p)
 }
 
-plot.count.start.year.25 = plot_start_year(25)
-plot.count.start.year.28 = plot_start_year(28)
-plot.count.start.year.30 = plot_start_year(30)
+plot.count.start.year.legend = cowplot::get_legend(plot_start_year(25,1))
+
+plot.count.start.year.25 = plot_start_year(25,0)
+plot.count.start.year.28 = plot_start_year(28,0)
+plot.count.start.year.30 = plot_start_year(30,0)
 ```
 
 ## Plot count in end year map 
 ```{r}
-plot_end_year = function(threshold_chosen){
-  ggplot() +
+plot_end_year = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
     geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
-    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',end_year_wbgt))),size=2) +
-    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
-                                  title = legend_create_count_end_year(threshold_chosen)),legend.text=element_text(size=10)) +
-    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Tiepolo')), limits = c(0,max(USA.df.merged$wbgt_25_1981))) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',end_year_wbgt))),size=1) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('OKeeffe2')), limits = c(0,max(USA.df.merged$wbgt_25_1981))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
     theme(panel.grid.major = element_blank(),
         axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
@@ -153,8 +164,22 @@ plot_end_year = function(threshold_chosen){
         panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
         legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
     theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+          guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_end_year(threshold_chosen)),legend.text=element_text(size=10)) 
+    }  
+
+    return(p)
 
 }
+
+plot.count.end.year.legend = cowplot::get_legend(plot_end_year(25,1))
 
 plot.count.end.year.25 = plot_end_year(25)
 plot.count.end.year.28 = plot_end_year(28)
@@ -163,13 +188,11 @@ plot.count.end.year.30 = plot_end_year(30)
 
 ## Plot total change map 
 ```{r}
-plot_total_change = function(threshold_chosen){
-  ggplot() +
+plot_total_change = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
     geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
-    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_wbgt_',threshold_chosen))),size=2) +
-    guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
-                                  title = legend_create_total_change(threshold_chosen)),legend.text=element_text(size=10)) +
-    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Nizami')), limits = c(-1*max(USA.df.merged$total_change_wbgt_25),max(USA.df.merged$total_change_wbgt_25))) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_wbgt_',threshold_chosen))),size=1) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Cassatt2')), limits = c(-1*max(USA.df.merged$total_change_wbgt_25),max(USA.df.merged$total_change_wbgt_25))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
     theme(panel.grid.major = element_blank(),
         axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
@@ -177,23 +200,41 @@ plot_total_change = function(threshold_chosen){
         panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
         legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
     theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+      guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_total_change(threshold_chosen)),legend.text=element_text(size=10))
+  }
+  
+  return(p)
 }
 
-plot.total.change.25 = plot_total_change(25)
-plot.total.change.28 = plot_total_change(28)
-plot.total.change.30 = plot_total_change(30)
+plot.total.change.legend = cowplot::get_legend(plot_total_change(25,1))
+
+plot.total.change.25 = plot_total_change(25,0)
+plot.total.change.28 = plot_total_change(28,0)
+plot.total.change.30 = plot_total_change(30,0)
 ```
 
 ## Place on single gridded plot
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_1_in_progress.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(plot.count.start.year.25,plot.count.start.year.28,plot.count.start.year.30,
-                        plot.total.change.25,plot.total.change.28,plot.total.change.30,
-                        nrow=2)
+pdf(paste0(wbgtmax.folder,'Figure_1.pdf'),paper='a4r',width=0,height=0)
+gridExtra::grid.arrange(as_grob(plot.count.start.year.25),as_grob(plot.count.start.year.28),as_grob(plot.count.start.year.30),
+                        plot.count.start.year.legend,
+                        as_grob(plot.total.change.25),as_grob(plot.total.change.28),as_grob(plot.total.change.30),
+                        plot.total.change.legend,
+                        heights = c(4, 1, 4, 1),
+                        layout_matrix = rbind(c(1, 2, 3),
+                                              c(4, 4, 4),
+                                              c(5, 6, 7),
+                                              c(8, 8, 8)),
+                        nrow=4)
 dev.off()
 
-gridExtra::grid.arrange(plot.count.start.year.25,plot.count.start.year.28,plot.count.start.year.30,
-                        plot.total.change.25,plot.total.change.28,plot.total.change.30,
-                        nrow=2)
 ```
 

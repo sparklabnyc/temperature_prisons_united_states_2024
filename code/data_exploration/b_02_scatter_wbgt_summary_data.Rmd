@@ -27,6 +27,7 @@ library(plyr)
 library(graticule)
 library(zoo)
 library(purrr)
+library(cowplot)
 ```
 
 ## Load WBGT regression file
@@ -49,39 +50,85 @@ us.main.data = us.main@data %>%
 ## Merge prison data
 ```{r}
 dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,us.main.data) %>%
-  dplyr::filter(status=='OPEN') %>% filter(population > -999) 
+  dplyr::filter(status=='OPEN') %>% filter(population > 0) 
+```
+
+## Merge climate region data
+```{r}
+us = readOGR(dsn=paste0(data.folder,"shapefiles/states"),layer="states")
+alaska = us[us$STATE_FIPS=="02",]
+hawaii = us[us$STATE_FIPS=="15",]
+us = us[!us$STATE_FIPS %in% c("02", "15"),]
+
+us = rbind(us, alaska, hawaii)
+shapefile.data = us@data
+
+shapefile.data$climate_region = 	c('Northwest','West North Central','Northeast','West North Central','West North Central',
+'West North Central','East North Central','Northwest','Northeast','East North Central',
+'Northwest','Northeast','East North Central','Northeast','West North Central',
+'Northeast','Northeast','Northeast','Northeast','Northeast',
+'Central','West','Southwest','West','Central',
+'Central','Northeast','Northeast','Central','Northeast',
+'Southwest','Central','South','Southeast','Central',
+'Southwest','South','Southeast','Central','South',
+'Southwest','Southeast','South','Southeast','Southeast',
+'South','South','Southeast','East North Central','Northwest',
+'West')
+
+shapefile.data = shapefile.data %>%
+  dplyr::select(STATE_ABBR,climate_region) %>%
+  dplyr::rename(state=STATE_ABBR) 
+
+dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,shapefile.data)
 ```
 
 ## Scatter plot
 ```{r}
-scatter_plot = function(threshold_chosen){
-  ggplot() +
+scatter_plot = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
     geom_point(data=dat.wbgt.summarised.regression,aes(x=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt)),
-                                                         y=get(paste0('total_change_wbgt_',threshold_chosen)),color=state,size=population)) +
+                                                           y=get(paste0('total_change_wbgt_',threshold_chosen)),color=climate_region,size=population)) +
     geom_hline(yintercept=0, linetype='dotted') + geom_vline(xintercept=0, linetype='dotted') +
     xlim(c(0,200)) + ylim(c(-50,70)) + 
-    coord_fixed() + xlab(paste0(start_year_wbgt)) + ylab(paste0('Total change',start_year_wbgt,'-',end_year_wbgt)) + theme_bw() +
+    xlab(paste0('Number of days above threshold\nin ',start_year_wbgt)) + ylab('') + theme_bw() +
     ggtitle(paste0(threshold_chosen,'°C')) + 
     theme(panel.grid.major = element_blank(),
-        axis.text.x = element_text(angle=0), axis.ticks.x=element_blank(),legend.text=element_text(size=20),
+        axis.text.x = element_text(angle=0), axis.ticks.x=element_blank(),legend.text=element_text(size=15),
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
         panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
         plot.title = element_text(hjust = 0.5),
-        legend.position = 'none', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) 
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) 
+  
+    if(legend_chosen==0){
+    p = p +
+      scale_color_manual(values=MetBrewer::met.brewer('Redon')) +
+      guides(size=FALSE, color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+      scale_color_manual(values=MetBrewer::met.brewer('Redon')) +
+      guides(color=guide_legend(title="", nrow=3,byrow=TRUE,shape = 21,size=4),size=guide_legend(title="", nrow=2,byrow=TRUE))
+  }
+  
+  return(p)
 }
 
-scatter.25 = scatter_plot(25)
-scatter.28 = scatter_plot(28)
-scatter.30 = scatter_plot(30)
+scatter.legend = cowplot::get_legend(scatter_plot(25,1))
+
+scatter.25 = scatter_plot(25,0)
+scatter.28 = scatter_plot(28,0)
+scatter.30 = scatter_plot(30,0)
 ```
 
 ## Place on single gridded plot
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_2_in_progress.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(scatter.25,scatter.28,scatter.30,
-                        nrow=1)
+pdf(paste0(wbgtmax.folder,'Figure_2.pdf'),paper='a4r',width=0,height=0)
+gridExtra::grid.arrange(as_grob(scatter.25),as_grob(scatter.28),as_grob(scatter.30),
+                        scatter.legend,
+                        left=paste0('Total change in annual number of days above\nthreshold during ',start_year_wbgt,'-',end_year_wbgt),
+                        heights = c(6, 1),
+                        layout_matrix = rbind(c(1, 2, 3),
+                                              c(4, 4, 4)),
+                        nrow=2)
 dev.off()
-
-gridExtra::grid.arrange(scatter.25,scatter.28,scatter.30,
-                        nrow=1)
 ```
