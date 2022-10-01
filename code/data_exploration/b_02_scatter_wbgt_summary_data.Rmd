@@ -107,7 +107,8 @@ scatter_plot = function(threshold_chosen,legend_chosen=0){
   if(legend_chosen==1){
     p = p +
       scale_color_manual(values=MetBrewer::met.brewer('Redon')) +
-      guides(color=guide_legend(title="", nrow=3,byrow=TRUE,shape = 21,size=4),size=guide_legend(title="", nrow=2,byrow=TRUE))
+      guides(color=guide_legend(title="", nrow=3,byrow=TRUE,shape = 21,override.aes = list(size=6)),
+             size=guide_legend(title="", nrow=2,byrow=TRUE))
   }
   
   return(p)

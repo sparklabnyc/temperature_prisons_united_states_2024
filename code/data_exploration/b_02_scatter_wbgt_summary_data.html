@@ -472,7 +472,8 @@ dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,shapef
   if(legend_chosen==1){
     p = p +
       scale_color_manual(values=MetBrewer::met.brewer(&#39;Redon&#39;)) +
-      guides(color=guide_legend(title=&quot;&quot;, nrow=3,byrow=TRUE,shape = 21,size=4),size=guide_legend(title=&quot;&quot;, nrow=2,byrow=TRUE))
+      guides(color=guide_legend(title=&quot;&quot;, nrow=3,byrow=TRUE,shape = 21,override.aes = list(size=6)),
+             size=guide_legend(title=&quot;&quot;, nrow=2,byrow=TRUE))
   }
   
   return(p)
