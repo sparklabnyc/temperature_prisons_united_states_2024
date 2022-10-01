@@ -223,7 +223,7 @@ plot.total.change.30 = plot_total_change(30,0)
 
 ## Place on single gridded plot
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_1.pdf'),paper='a4r',width=0,height=0)
+pdf(paste0(wbgtmax.folder,'Figure_2.pdf'),paper='a4r',width=0,height=0)
 gridExtra::grid.arrange(as_grob(plot.count.start.year.25),as_grob(plot.count.start.year.28),as_grob(plot.count.start.year.30),
                         plot.count.start.year.legend,
                         as_grob(plot.total.change.25),as_grob(plot.total.change.28),as_grob(plot.total.change.30),

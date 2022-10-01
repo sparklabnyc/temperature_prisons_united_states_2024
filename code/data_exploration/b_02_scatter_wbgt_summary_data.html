@@ -451,8 +451,9 @@ dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,shapef
 <h2>Scatter plot</h2>
 <pre class="r"><code>scatter_plot = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
-    geom_point(data=dat.wbgt.summarised.regression,aes(x=get(paste0(&#39;wbgt_&#39;,threshold_chosen,&#39;_&#39;,start_year_wbgt)),
-                                                           y=get(paste0(&#39;total_change_wbgt_&#39;,threshold_chosen)),color=climate_region,size=population)) +
+    geom_point(data=dat.wbgt.summarised.regression,
+               aes(x=get(paste0(&#39;wbgt_&#39;,threshold_chosen,&#39;_&#39;,start_year_wbgt)),
+                   y=get(paste0(&#39;total_change_wbgt_&#39;,threshold_chosen)),color=climate_region,size=population)) +
     geom_hline(yintercept=0, linetype=&#39;dotted&#39;) + geom_vline(xintercept=0, linetype=&#39;dotted&#39;) +
     xlim(c(0,200)) + ylim(c(-50,70)) + 
     xlab(paste0(&#39;Number of days above threshold\nin &#39;,start_year_wbgt)) + ylab(&#39;&#39;) + theme_bw() +
@@ -493,7 +494,7 @@ scatter.25 = scatter_plot(25,0)</code></pre>
 </div>
 <div id="place-on-single-gridded-plot" class="section level2">
 <h2>Place on single gridded plot</h2>
-<pre class="r"><code>pdf(paste0(wbgtmax.folder,&#39;Figure_2.pdf&#39;),paper=&#39;a4r&#39;,width=0,height=0)
+<pre class="r"><code>pdf(paste0(wbgtmax.folder,&#39;Figure_3.pdf&#39;),paper=&#39;a4r&#39;,width=0,height=0)
 gridExtra::grid.arrange(as_grob(scatter.25),as_grob(scatter.28),as_grob(scatter.30),
                         scatter.legend,
                         left=paste0(&#39;Total change in annual number of days above\nthreshold during &#39;,start_year_wbgt,&#39;-&#39;,end_year_wbgt),

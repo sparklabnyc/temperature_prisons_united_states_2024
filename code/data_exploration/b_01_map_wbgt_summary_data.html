@@ -609,7 +609,7 @@ plot.total.change.legend = cowplot::get_legend(plot_total_change(25,1))</code></
 </div>
 <div id="place-on-single-gridded-plot" class="section level2">
 <h2>Place on single gridded plot</h2>
-<pre class="r"><code>pdf(paste0(wbgtmax.folder,&#39;Figure_1.pdf&#39;),paper=&#39;a4r&#39;,width=0,height=0)
+<pre class="r"><code>pdf(paste0(wbgtmax.folder,&#39;Figure_2.pdf&#39;),paper=&#39;a4r&#39;,width=0,height=0)
 gridExtra::grid.arrange(as_grob(plot.count.start.year.25),as_grob(plot.count.start.year.28),as_grob(plot.count.start.year.30),
                         plot.count.start.year.legend,
                         as_grob(plot.total.change.25),as_grob(plot.total.change.28),as_grob(plot.total.change.30),

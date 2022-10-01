@@ -154,7 +154,7 @@ plot_over_time = function(threshold_chosen,legend_chosen=0){
                 aes(group=climate_region,color=climate_region,
                     x=year,y=get(paste0('wbgt_',threshold_chosen)))) +
       scale_color_manual(values=MetBrewer::met.brewer('Redon')) +
-      guides(color=guide_legend(title="", nrow=3,byrow=TRUE,shape = 21,override.aes = list(size=6)))
+      guides(color=guide_legend(title="", nrow=3,byrow=TRUE,shape = 21))
   }
   
   return(p)
@@ -170,7 +170,7 @@ plot.over.time.30 = plot_over_time(30,0)
 
 ## Place on single gridded plot
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_3.pdf'),paper='a4r',width=0,height=0)
+pdf(paste0(wbgtmax.folder,'Figure_4.pdf'),paper='a4r',width=0,height=0)
 gridExtra::grid.arrange(plot.over.time.25,plot.over.time.28,plot.over.time.30,
                         nrow=1)
 dev.off()

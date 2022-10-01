@@ -1,5 +1,5 @@
 ---
-title: "Plot change of WBGT over time by population size"
+title: "Plot prison population by state"
 output: html_document
 ---
 
@@ -84,15 +84,12 @@ dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,shapef
 
 ## Scatter plot
 ```{r}
-scatter_plot = function(threshold_chosen,legend_chosen=0){
-  p = ggplot() +
-    geom_point(data=dat.wbgt.summarised.regression,
-               aes(x=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt)),
-                   y=get(paste0('total_change_wbgt_',threshold_chosen)),color=climate_region,size=population)) +
-    geom_hline(yintercept=0, linetype='dotted') + geom_vline(xintercept=0, linetype='dotted') +
-    xlim(c(0,200)) + ylim(c(-50,70)) + 
-    xlab(paste0('Number of days above threshold\nin ',start_year_wbgt)) + ylab('') + theme_bw() +
-    ggtitle(paste0(threshold_chosen,'°C')) + 
+population_plot = function(legend_chosen=0){
+  p = ggplot(data=dat.wbgt.summarised.regression,aes(x=state,y=population,color=climate_region,fill=climate_region)) +
+    geom_bar(stat='identity') +
+    xlab('State') + ylab('Prison population') + 
+    scale_y_continuous(labels=scales::comma) +
+    theme_bw() +
     theme(panel.grid.major = element_blank(),
         axis.text.x = element_text(angle=0), axis.ticks.x=element_blank(),legend.text=element_text(size=15),
         panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
@@ -102,35 +99,26 @@ scatter_plot = function(threshold_chosen,legend_chosen=0){
   
     if(legend_chosen==0){
     p = p +
-      scale_color_manual(values=MetBrewer::met.brewer('Redon')) +
+      scale_fill_manual(values=MetBrewer::met.brewer('Redon')) +
       guides(size=FALSE, color=FALSE)
   }
   if(legend_chosen==1){
     p = p +
+      scale_fill_manual(values=MetBrewer::met.brewer('Redon')) +
       scale_color_manual(values=MetBrewer::met.brewer('Redon')) +
-      guides(color=guide_legend(title="", nrow=3,byrow=TRUE,shape = 21,override.aes = list(size=6)),
-             size=guide_legend(title="", nrow=2,byrow=TRUE))
+      guides(fill=guide_legend(title="", nrow=3,byrow=TRUE,shape = 21,override.aes = list(size=6)),
+             color=FALSE)
   }
   
   return(p)
 }
 
-scatter.legend = cowplot::get_legend(scatter_plot(25,1))
-
-scatter.25 = scatter_plot(25,0)
-scatter.28 = scatter_plot(28,0)
-scatter.30 = scatter_plot(30,0)
+population_plot = population_plot(legend_chosen=1)
 ```
 
-## Place on single gridded plot
+## Plot
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_3.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(as_grob(scatter.25),as_grob(scatter.28),as_grob(scatter.30),
-                        scatter.legend,
-                        left=paste0('Total change in annual number of days above\nthreshold during ',start_year_wbgt,'-',end_year_wbgt),
-                        heights = c(6, 1),
-                        layout_matrix = rbind(c(1, 2, 3),
-                                              c(4, 4, 4)),
-                        nrow=2)
+pdf(paste0(wbgtmax.folder,'Figure_1.pdf'),paper='a4r',width=0,height=0)
+print(population_plot)
 dev.off()
 ```
