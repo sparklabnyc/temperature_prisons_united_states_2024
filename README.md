@@ -1,6 +1,6 @@
 # Temperature and prisons in the United States
 
-Robbie M Parks, Cascade Tuholske
+Victoria D. Lynch, Cascade Tuholske, Robbie M Parks
 
 ## Introduction
 
