@@ -1,10 +1,8 @@
 # Temperature and prisons in the United States
 
-Victoria D. Lynch, Cascade Tuholske, Robbie M Parks
+Cascade Tuholske, Victoria D. Lynch, Robbie M. Parks
 
 ## Introduction
-
-Work in progress by Robbie M Parks, Cascade Tuholske
 
 ## Code (in progress)
 

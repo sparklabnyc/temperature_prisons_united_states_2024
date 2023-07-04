@@ -1,7 +1,9 @@
 # list of objects used across different scripts
-start_year_wbgt = 1981
-end_year_wbgt = 2021
+start_year_wbgt = 1982
+end_year_wbgt = 2020
 years_wbgtmax = c(start_year_wbgt:end_year_wbgt)
+
+vintage = 2020 # population estimate publish year
 
 # states included in analysis
 states_included = c("01", "04", "05", "06", 

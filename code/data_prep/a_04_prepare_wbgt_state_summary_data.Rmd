@@ -1,0 +1,165 @@
+---
+title: "Prepare WBGT state summary data"
+output: html_document
+---
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load county-level data
+```{r}
+dat.wbgt = readRDS(paste0(wbgt.folder,'weighted_area_raster_state_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'.rds'))
+```
+
+## Load county-level population data
+```{r}
+dat_pop= data.frame()
+for(year_selected in years_wbgtmax){
+  if(year_selected<1990){
+    filename_in = paste0(new_population_data,
+                         'pre_1990/pop_monthly_10_year_age_groups_', year_selected,'.csv')  
+  }
+  if(year_selected>=1990){
+    filename_in = paste0(new_population_data,
+                         'vintage_',vintage,'/pop_monthly_10_year_age_groups_', year_selected,'.csv')
+  }
+  dat_year=readr::read_csv(filename_in)
+  dat_pop = data.table::rbindlist(list(dat_pop,dat_year))
+  rm(dat_year)
+}
+
+dat_pop = dat_pop %>%
+  dplyr::filter(month==6) %>%
+  dplyr::group_by(year,fips) %>%
+  dplyr::summarise(pop=sum(pop))
+```
+
+## Number of days per year above or equal to 26C, 28C, 39C, 35C
+```{r}
+dat.wbgt.summarised = dat.wbgt %>%
+  mutate(wbgt_26=ifelse(wbgtmax>26,1,0),wbgt_28=ifelse(wbgtmax>28,1,0),
+         wbgt_30=ifelse(wbgtmax>30,1,0),wbgt_35=ifelse(wbgtmax>35,1,0)) %>%
+  group_by(fips, year) %>%
+  dplyr::summarise(wbgt_26=sum(wbgt_26), wbgt_28=sum(wbgt_28), wbgt_30=sum(wbgt_30), wbgt_35=sum(wbgt_35)) %>%
+  mutate(fips=as.character(fips))
+```
+
+# Fix counties to be consistent all the way through
+```{r}
+dat.wbgt.summarised = dat.wbgt.summarised %>%
+      mutate(fips = case_when(
+        # Alaska FIPS codes to do here when have time
+        fips== 'XXXXX' ~ 'XXXXX',
+        fips== '08001' | fips== '08013' | fips== '08059' | fips== '08123' ~ '08014', # 08001, 08013, 08059, 08123 -> 08014
+        fips== '12025' ~ '12086', #  12025 -> 12086
+        fips== '30031' | fips== '30067'~ '30113', # 30113 -> 30031, 30067
+        fips== '46113' ~ '46102', # 46113 -> 46102
+        fips== '51560' ~ '51005', # 51560 -> 51005
+        fips== '51780' ~ '51083', # 51780 -> 51083
+        fips== '51515' ~ '51019', # 51515 -> 51019
+        TRUE ~ fips
+        ))
+```
+
+# summarise by new merged consistent counties
+```{r}
+dat.wbgt.summarised = dat.wbgt.summarised %>%
+  group_by(fips, year) %>%
+  summarise(wbgt_26=mean(wbgt_26),wbgt_28=mean(wbgt_28),wbgt_30=mean(wbgt_30),wbgt_35=mean(wbgt_35))
+```
+
+## Merge exposure and population files
+```{r}
+dat.wbgt.summarised.merged = left_join(dat.wbgt.summarised,dat_pop)
+dat.wbgt.summarised.merged.na = dat.wbgt.summarised.merged %>% dplyr::filter(is.na(pop)==TRUE)
+```
+
+## Take weighted average of each state in each year by population
+```{r}
+dat.wbgt.summarised.merged.weighted = dat.wbgt.summarised.merged %>%
+  mutate(state=substr(fips,1,2)) %>%
+  group_by(state,year) %>%
+  summarise(wbgt_26 = weighted.mean(wbgt_26,pop),
+            wbgt_28 = weighted.mean(wbgt_28,pop),
+            wbgt_30 = weighted.mean(wbgt_30,pop),
+            wbgt_35 = weighted.mean(wbgt_35,pop))
+```
+
+## Save state file over time
+```{r}
+saveRDS(dat.wbgt.summarised.merged.weighted,paste0(wbgt.folder,'weighted_area_raster_state_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+```
+
+<!-- ## Take Number of days in first and last year of data -->
+<!-- ```{r} -->
+<!-- dat.wbgt.summarised.start = dat.wbgt.summarised %>% -->
+<!--   filter(year%in%c(start_year_wbgt)) %>% -->
+<!--   select(-year) %>% -->
+<!--   dplyr::rename_with(~ paste0(., "_", start_year_wbgt), -prison_id) -->
+
+<!-- dat.wbgt.summarised.end = dat.wbgt.summarised %>% -->
+<!--   filter(year%in%c(end_year_wbgt)) %>% -->
+<!--   select(-year) %>% -->
+<!--   dplyr::rename_with(~ paste0(., "_", end_year_wbgt), -prison_id) -->
+<!-- ``` -->
+
+<!-- ## Trends in growth of number of day per year over time -->
+<!-- ```{r} -->
+<!-- dat.wbgt.summarised.regression.26 = dat.wbgt.summarised %>% -->
+<!--   mutate(year=as.numeric(year)) %>% -->
+<!--   group_by(prison_id) %>% -->
+<!--   do(broom::tidy(lm(wbgt_26 ~ year, data = .))) %>% -->
+<!--   filter(term=='year') %>% -->
+<!--   select(prison_id,estimate) %>% -->
+<!--   mutate(total_change_wbgt_26=estimate*(length(years_wbgtmax))) %>% -->
+<!--   rename(annual_change_wbgt_26=estimate) %>% -->
+<!--   select(prison_id,annual_change_wbgt_26,total_change_wbgt_26) -->
+
+<!-- dat.wbgt.summarised.regression.28 = dat.wbgt.summarised %>% -->
+<!--   mutate(year=as.numeric(year)) %>% -->
+<!--   group_by(prison_id) %>% -->
+<!--   do(broom::tidy(lm(wbgt_28 ~ year, data = .))) %>% -->
+<!--   filter(term=='year') %>% -->
+<!--   select(prison_id,estimate) %>% -->
+<!--   mutate(total_change_wbgt_28=estimate*(length(years_wbgtmax))) %>% -->
+<!--   rename(annual_change_wbgt_28=estimate) %>% -->
+<!--   select(prison_id,annual_change_wbgt_28,total_change_wbgt_28) -->
+
+<!-- dat.wbgt.summarised.regression.30 = dat.wbgt.summarised %>% -->
+<!--   mutate(year=as.numeric(year)) %>% -->
+<!--   group_by(prison_id) %>% -->
+<!--   do(broom::tidy(lm(wbgt_30 ~ year, data = .))) %>% -->
+<!--   filter(term=='year') %>% -->
+<!--   select(prison_id,estimate) %>% -->
+<!--   mutate(total_change_wbgt_30=estimate*(length(years_wbgtmax))) %>% -->
+<!--   rename(annual_change_wbgt_30=estimate) %>% -->
+<!--   select(prison_id,annual_change_wbgt_30,total_change_wbgt_30) -->
+
+<!-- dat.wbgt.summarised.regression.35 = dat.wbgt.summarised %>% -->
+<!--   mutate(year=as.numeric(year)) %>% -->
+<!--   group_by(prison_id) %>% -->
+<!--   do(broom::tidy(lm(wbgt_35 ~ year, data = .))) %>% -->
+<!--   filter(term=='year') %>% -->
+<!--   select(prison_id,estimate) %>% -->
+<!--   mutate(total_change_wbgt_35=estimate*(length(years_wbgtmax))) %>% -->
+<!--   rename(annual_change_wbgt_35=estimate) %>% -->
+<!--   select(prison_id,annual_change_wbgt_35,total_change_wbgt_35) -->
+<!-- ``` -->
+
+<!-- ## Merge regression analyses into one data frame -->
+<!-- ```{r} -->
+<!-- dat.wbgt.summarised.regression.merged = left_join(dat.wbgt.summarised.start,dat.wbgt.summarised.end) %>% -->
+<!--   left_join(.,dat.wbgt.summarised.regression.26) %>% -->
+<!--   left_join(.,dat.wbgt.summarised.regression.28) %>% -->
+<!--   left_join(.,dat.wbgt.summarised.regression.30) %>% -->
+<!--   left_join(.,dat.wbgt.summarised.regression.35) -->
+<!-- ``` -->
+
+<!-- ## Save regression file -->
+<!-- ```{r} -->
+<!-- saveRDS(dat.wbgt.summarised.regression.merged,paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds')) -->
+<!-- ``` -->
