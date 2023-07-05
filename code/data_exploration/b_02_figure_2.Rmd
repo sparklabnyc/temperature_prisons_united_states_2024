@@ -88,8 +88,25 @@ dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shape
   dplyr::summarise(wbgt_26 = weighted.mean(wbgt_26,POPULATION),
             wbgt_28 = weighted.mean(wbgt_28,POPULATION),
             wbgt_30 = weighted.mean(wbgt_30,POPULATION),
+            wbgt_35 = weighted.mean(wbgt_35,POPULATION)) 
+
+STATES = dat.wbgt.summarised.merged.weighted.prison %>% pull(STATE) %>% unique()
+
+dat.wbgt.summarised.merged.weighted.prison.national = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
+  dplyr::filter(STATUS=='OPEN') %>% 
+  dplyr::filter(POPULATION > 0) %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarise(wbgt_26 = weighted.mean(wbgt_26,POPULATION),
+            wbgt_28 = weighted.mean(wbgt_28,POPULATION),
+            wbgt_30 = weighted.mean(wbgt_30,POPULATION),
             wbgt_35 = weighted.mean(wbgt_35,POPULATION)) %>%
-  mutate(STATE=factor(STATE, levels=rev(sort(unique(STATE)))))
+  dplyr::mutate(STATE='USA',STATEFP='99') %>%
+  dplyr::relocate(STATE) %>%
+  dplyr::relocate(STATEFP)
+
+dat.wbgt.summarised.merged.weighted.prison = 
+  rbind(dat.wbgt.summarised.merged.weighted.prison,dat.wbgt.summarised.merged.weighted.prison.national) %>%
+  mutate(STATE=factor(STATE, levels=rev(c('USA',STATES))))
 ```
 
 ## Load state file over time
@@ -156,7 +173,7 @@ USA.df.merged = USA.df.merged %>%
 ```{r}
 plot_start_year = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
-    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey',color='black',size=0.2) +
     geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt))),size=1) +
     scale_color_gradientn(colors=(MetBrewer::met.brewer('OKeeffe2')), limits = c(0,max(USA.df.merged$wbgt_26_1982))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
@@ -194,9 +211,9 @@ plot.count.start.year.30 = plot_start_year(30,0)
 ```{r}
 plot_end_year = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
-    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey',color='black',size=0.2) +
     geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',end_year_wbgt))),size=1) +
-    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('OKeeffe2')), limits = c(0,max(USA.df.merged$wbgt_26_1982))) +
+    scale_color_gradientn(colors=MetBrewer::met.brewer('OKeeffe2'), limits = c(0,max(USA.df.merged$wbgt_26_1982))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
     theme(panel.grid.major = element_blank(),
         axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=5),
@@ -232,7 +249,7 @@ library(MetBrewer)
 
 plot_total_change = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
-    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='cornsilk',color='black',size=0.2) +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey',color='black',size=0.2) +
     geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_wbgt_',threshold_chosen))),size=1) +
     scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Cassatt2')), limits = c(-1*max(USA.df.merged$total_change_wbgt_26),max(USA.df.merged$total_change_wbgt_26))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
@@ -271,11 +288,12 @@ plot_state_year_difference = function(threshold_chosen,legend_chosen=0){
                  aes(x=year,y=STATE,fill=get(paste0('wbgt_',threshold_chosen,'_diff'))),size=1) +
     guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
                                  barheight = 1,title.vjust = 0.8,
-                                 title = "Difference in number of hot-humid days"),legend.text=element_text(size=15)) +
+                                 title = "Difference in number of hot-humid days"),
+                                 legend.text=element_text(size=15)) +
     xlab('Year') +
     ylab('State') +
-    scale_fill_gradient2(low=met.brewer('Demuth')[10],mid='cornsilk',high=met.brewer('Demuth')[1],
-                         na.value="cornsilk",guide = guide_legend(nrow = 1)) +
+    scale_fill_gradient2(low=met.brewer('Demuth')[10],mid='white',high=met.brewer('Demuth')[1],
+                         na.value="white",guide = guide_legend(nrow = 1)) +
     theme_bw() + theme(text = element_text(size = 10),
     panel.grid.major = element_blank(),axis.text.x = element_text(angle=90 , size=8, vjust=0.5),
     plot.title = element_text(hjust = 0.5),panel.background = element_blank(),
@@ -346,20 +364,3 @@ gridExtra::grid.arrange(as_grob(plot.state.year.diff.28),
                                               c(1, 3)),
                         nrow=2) 
 ```
-
-<!-- ## Place on single gridded plot -->
-<!-- ```{r} -->
-<!-- pdf(paste0(wbgtmax.folder,'Figure_2_old.pdf'),paper='a4r',width=0,height=0) -->
-<!-- gridExtra::grid.arrange(as_grob(plot.count.start.year.26),as_grob(plot.count.start.year.28),as_grob(plot.count.start.year.30), -->
-<!--                         plot.count.start.year.legend, -->
-<!--                         as_grob(plot.total.change.26),as_grob(plot.total.change.28),as_grob(plot.total.change.30), -->
-<!--                         plot.total.change.legend, -->
-<!--                         heights = c(4, 1, 4, 1), -->
-<!--                         layout_matrix = rbind(c(1, 2, 3), -->
-<!--                                               c(4, 4, 4), -->
-<!--                                               c(5, 6, 7), -->
-<!--                                               c(8, 8, 8)), -->
-<!--                         nrow=4) -->
-<!-- dev.off() -->
-<!-- ``` -->
-
