@@ -479,7 +479,11 @@ dat.wbgt.summarised.merged.weighted.prison.state = left_join(dat.wbgt.summarised
   dplyr::mutate(wbgt_26_diff = wbgt_26_prison - wbgt_26_state,
                 wbgt_28_diff = wbgt_28_prison - wbgt_28_state,
                 wbgt_30_diff = wbgt_30_prison - wbgt_30_state,
-                wbgt_35_diff = wbgt_35_prison - wbgt_35_state,)</code></pre>
+                wbgt_35_diff = wbgt_35_prison - wbgt_35_state)</code></pre>
+</div>
+<div id="save-heatmap-data-out" class="section level2">
+<h2>Save heatmap data out</h2>
+<pre class="r"><code>readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state ,paste0(wbgtmax.folder,&#39;Figure_2_heatmap.csv&#39;))</code></pre>
 </div>
 <div id="load-us-state-shapefile-for-mapping" class="section level2">
 <h2>Load US state shapefile for mapping</h2>

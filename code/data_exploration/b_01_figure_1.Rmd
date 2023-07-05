@@ -81,7 +81,15 @@ dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.m
   dplyr::summarise(wbgt_26_pop_mean = mean(wbgt_26_pop),
                    wbgt_28_pop_mean = mean(wbgt_28_pop),
                    wbgt_30_pop_mean = mean(wbgt_30_pop),
-                   wbgt_35_pop_mean = mean(wbgt_35_pop))
+                   wbgt_35_pop_mean = mean(wbgt_35_pop)) %>%
+  dplyr::rename(Type=TYPE) %>%
+  dplyr::mutate(Type=case_when(Type=='COUNTY' ~ 'County',
+                               Type=='LOCAL' ~ 'Local',
+                               Type=='FEDERAL' ~ 'Federal',
+                               Type=='STATE' ~ 'State',
+                               TRUE ~ 'Other')) %>%
+  dplyr::mutate(Type=as.factor(Type)) %>%
+  dplyr::mutate(Type=factor(Type,levels=c('Federal','State','County','Local','Other')))
 ```
 
 ## Plot barchart by state stacked by prison type
@@ -89,10 +97,20 @@ dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.m
 library(MetBrewer)
 
 plot_bar_chart = function(threshold_chosen,legend_chosen=1){ 
+  
+  # calculate rank of bars
+  dat.rank = dat.wbgt.summarised.merged.weighted.prison.5year.average %>%
+    group_by(STATE) %>%
+    dplyr::summarise(sum=sum(get(paste0('wbgt_',threshold_chosen,'_pop_mean')))) %>%
+    dplyr::arrange(sum) %>%
+    dplyr::mutate(rank=row_number())
+  
+  dat.plot = left_join(dat.wbgt.summarised.merged.weighted.prison.5year.average,dat.rank)
+
  p = ggplot() + 
-   geom_bar(data=dat.wbgt.summarised.merged.weighted.prison.5year.average, 
-                aes(x=reorder(STATE, get(paste0('wbgt_',threshold_chosen,'_pop_mean'))),
-                              y=get(paste0('wbgt_',threshold_chosen,'_pop_mean')),fill=TYPE),stat = "identity") +
+   geom_bar(data=dat.plot, 
+                aes(x=reorder(STATE, rank),
+                              y=get(paste0('wbgt_',threshold_chosen,'_pop_mean')),fill=Type),stat = "identity") +
    ylab('Annual hot-humid person-days for those incarcerated') + 
    xlab('State') + 
    scale_y_continuous(label=scales::comma) + 
@@ -130,4 +148,28 @@ print(plot.bar.chart.28)
 dev.off()
 
 plot.bar.chart.28
+```
+
+## Save output data
+```{r}
+dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded = dat.wbgt.summarised.merged.weighted.prison.5year.average %>%
+  mutate(wbgt_26_pop_mean=round(wbgt_26_pop_mean),
+         wbgt_28_pop_mean=round(wbgt_28_pop_mean),
+         wbgt_30_pop_mean=round(wbgt_30_pop_mean),
+         wbgt_35_pop_mean=round(wbgt_35_pop_mean))
+
+dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded.total = dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded %>%
+  group_by(STATE,STATEFP) %>%
+  dplyr::summarise(wbgt_26_pop_mean=sum(wbgt_26_pop_mean),
+         wbgt_28_pop_mean=sum(wbgt_28_pop_mean),
+         wbgt_30_pop_mean=sum(wbgt_30_pop_mean),
+         wbgt_35_pop_mean=sum(wbgt_35_pop_mean)) %>%
+  mutate(Type='Total') %>%
+dplyr::relocate(Type)
+
+dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded = rbind(dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded,
+                                                                         dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded.total) %>%
+  arrange(STATEFP)
+
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded ,paste0(wbgtmax.folder,'Figure_1.csv'))
 ```
