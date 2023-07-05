@@ -316,6 +316,14 @@ gridExtra::grid.arrange(as_grob(plot.state.year.diff.26),
                                               c(1, 3)),
                         nrow=2) 
 dev.off()
+
+gridExtra::grid.arrange(as_grob(plot.state.year.diff.26),
+                        as_grob(plot.count.end.year.26),
+                        as_grob(plot.total.change.26),
+                        widths = c(7, 4),
+                        layout_matrix = rbind(c(1, 2),
+                                              c(1, 3)),
+                        nrow=2) 
 ```
 
 ## 28°C: Place arrangement of plots
@@ -329,21 +337,29 @@ gridExtra::grid.arrange(as_grob(plot.state.year.diff.28),
                                               c(1, 3)),
                         nrow=2) 
 dev.off()
+
+gridExtra::grid.arrange(as_grob(plot.state.year.diff.28),
+                        as_grob(plot.count.end.year.28),
+                        as_grob(plot.total.change.28),
+                        widths = c(7, 4),
+                        layout_matrix = rbind(c(1, 2),
+                                              c(1, 3)),
+                        nrow=2) 
 ```
 
-## Place on single gridded plot
-```{r}
-pdf(paste0(wbgtmax.folder,'Figure_2_old.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(as_grob(plot.count.start.year.26),as_grob(plot.count.start.year.28),as_grob(plot.count.start.year.30),
-                        plot.count.start.year.legend,
-                        as_grob(plot.total.change.26),as_grob(plot.total.change.28),as_grob(plot.total.change.30),
-                        plot.total.change.legend,
-                        heights = c(4, 1, 4, 1),
-                        layout_matrix = rbind(c(1, 2, 3),
-                                              c(4, 4, 4),
-                                              c(5, 6, 7),
-                                              c(8, 8, 8)),
-                        nrow=4)
-dev.off()
-```
+<!-- ## Place on single gridded plot -->
+<!-- ```{r} -->
+<!-- pdf(paste0(wbgtmax.folder,'Figure_2_old.pdf'),paper='a4r',width=0,height=0) -->
+<!-- gridExtra::grid.arrange(as_grob(plot.count.start.year.26),as_grob(plot.count.start.year.28),as_grob(plot.count.start.year.30), -->
+<!--                         plot.count.start.year.legend, -->
+<!--                         as_grob(plot.total.change.26),as_grob(plot.total.change.28),as_grob(plot.total.change.30), -->
+<!--                         plot.total.change.legend, -->
+<!--                         heights = c(4, 1, 4, 1), -->
+<!--                         layout_matrix = rbind(c(1, 2, 3), -->
+<!--                                               c(4, 4, 4), -->
+<!--                                               c(5, 6, 7), -->
+<!--                                               c(8, 8, 8)), -->
+<!--                         nrow=4) -->
+<!-- dev.off() -->
+<!-- ``` -->
 
