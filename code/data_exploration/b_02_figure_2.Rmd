@@ -70,6 +70,11 @@ map = fortify(us.main)
 us.main@data$id = rownames(us.main@data) 
 shapefile.data = us.main@data
 
+# fix the weird Alabama mistake
+shapefile.data = shapefile.data %>%
+  dplyr::mutate(STATEFP=case_when(STATEFP=='10' & STATE=='AL'~ '01',
+                               TRUE ~ STATEFP))
+
 # merge selected data to map_create dataframe for colouring of ggplot
 USA.df = merge(map, shapefile.data, by='id')
 USA.df$prison_id = as.integer(as.character(USA.df$FID))
