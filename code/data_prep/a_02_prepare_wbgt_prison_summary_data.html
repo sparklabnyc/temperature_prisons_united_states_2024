@@ -11,7 +11,7 @@
 
 
 
-<title>Prepare WBGT summary data</title>
+<title>Prepare WBGT prison summary data</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -348,7 +348,7 @@ display: none;
 
 
 
-<h1 class="title toc-ignore">Prepare WBGT summary data</h1>
+<h1 class="title toc-ignore">Prepare WBGT prison summary data</h1>
 
 </div>
 
@@ -360,8 +360,8 @@ display: none;
 <h2>Load prison WBGT file</h2>
 <pre class="r"><code>dat.wbgt = readRDS(paste0(wbgt.folder,&#39;weighted_area_raster_prison_wbgtmax_daily_&#39;,start_year_wbgt,&#39;_&#39;,end_year_wbgt,&#39;.rds&#39;))</code></pre>
 </div>
-<div id="number-of-days-per-year-above-or-equal-to-26c-28c-39c-35c" class="section level2">
-<h2>Number of days per year above or equal to 26C, 28C, 39C, 35C</h2>
+<div id="number-of-days-per-year-above-or-equal-to-26c-28c-30c-35c" class="section level2">
+<h2>Number of days per year above or equal to 26C, 28C, 30C, 35C</h2>
 <pre class="r"><code>dat.wbgt.summarised = dat.wbgt %&gt;%
   mutate(wbgt_26=ifelse(wbgtmax&gt;26,1,0),wbgt_28=ifelse(wbgtmax&gt;28,1,0),
          wbgt_30=ifelse(wbgtmax&gt;30,1,0),wbgt_35=ifelse(wbgtmax&gt;35,1,0)) %&gt;%
@@ -378,12 +378,12 @@ display: none;
 <h2>Take Number of days in first and last year of data</h2>
 <pre class="r"><code>dat.wbgt.summarised.start = dat.wbgt.summarised %&gt;%
   filter(year%in%c(start_year_wbgt)) %&gt;%
-  select(-year) %&gt;%
+  dplyr::select(-year) %&gt;%
   dplyr::rename_with(~ paste0(., &quot;_&quot;, start_year_wbgt), -prison_id)
 
 dat.wbgt.summarised.end = dat.wbgt.summarised %&gt;%
   filter(year%in%c(end_year_wbgt)) %&gt;%
-  select(-year) %&gt;%
+  dplyr::select(-year) %&gt;%
   dplyr::rename_with(~ paste0(., &quot;_&quot;, end_year_wbgt), -prison_id)</code></pre>
 </div>
 <div id="trends-in-growth-of-number-of-day-per-year-over-time" class="section level2">

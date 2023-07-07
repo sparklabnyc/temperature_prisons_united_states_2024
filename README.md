@@ -1,4 +1,4 @@
-# Temperature and prisons in the United States
+# Evolution of Dangerous Humid Heat Exposure Among Incarcerated People in the United States
 
 Cascade Tuholske, Victoria D. Lynch, Robbie M. Parks
 
@@ -8,9 +8,13 @@ Cascade Tuholske, Victoria D. Lynch, Robbie M. Parks
 
 ### Data preparation (data_prep) list:
 
-a_01_prepare_wbgt_data - prepare WBGT data
+a_01_prepare_wbgt_prison_data - load WBGT prison data
 
-a_02_prepare_wbgt_summary_data - prepare WBGT summary data
+a_02_prepare_wbgt_prison_summary_data - prepare WBGT prison summary data
+
+a_03_prepare_wbgt_state_data - load WBGT state data
+
+a_04_prepare_wbgt_state_summary_data - prepare WBGT state summary data
 
 ### Data exploration (data_exploration) list:
 
