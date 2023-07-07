@@ -495,6 +495,12 @@ population</h2>
 ## 5 NOT AVAILABLE     245
 ## 6 STATE         1202930</code></pre>
 </div>
+<div id="how-many-incarcerated-people-included-in-state-prisons-top-5" class="section level1">
+<h1>How many incarcerated people included in state prisons (top 5)?</h1>
+<pre class="r"><code>shapefile.data %&gt;% dplyr::filter(Type==&#39;State&#39;) %&gt;% group_by(STATE)  %&gt;% tally(POPULATION) %&gt;% arrange(desc(n))</code></pre>
+<pre><code>## # A tibble: 0 × 2
+## # ℹ 2 variables: STATE &lt;chr&gt;, n &lt;int&gt;</code></pre>
+</div>
 <div id="how-many-incarcerated-people-by-state" class="section level1">
 <h1>How many incarcerated people by state?</h1>
 <pre class="r"><code>shapefile.data %&gt;% group_by(STATE) %&gt;% tally(POPULATION) %&gt;% arrange(desc(n))</code></pre>
@@ -512,6 +518,16 @@ population</h2>
 ##  9 AZ     59624
 ## 10 MI     59453
 ## # ℹ 39 more rows</code></pre>
+</div>
+<div id="how-many-incarcerated-people-by-prison-top-5" class="section level1">
+<h1>How many incarcerated people by prison (top 5)?</h1>
+<pre class="r"><code>shapefile.data %&gt;% dplyr::select(NAME, STATE, POPULATION) %&gt;% arrange(desc(POPULATION)) %&gt;% head(n=5)</code></pre>
+<pre><code>##                                           NAME STATE POPULATION
+## 1                            COOK COUNTY JAILS    IL       8216
+## 2                           WOODMAN STATE JAIL    TX       6478
+## 3                 LOUISIANA STATE PENITENTIARY    LA       6073
+## 4 CA SUBSTANCE ABUSE TREATMENT FACILITY (SATF)    CA       5843
+## 5                                   ASPC-LEWIS    AZ       5480</code></pre>
 </div>
 
 

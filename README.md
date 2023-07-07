@@ -18,6 +18,8 @@ a_04_prepare_wbgt_state_summary_data - prepare WBGT state summary data
 
 ### Data exploration (data_exploration) list:
 
+b_00_prisons_explore - Basic facts about prisons
+
 b_01_figure_1 - Plot Figure 1
 
 b_02_figure_2 - Plot Figure 2

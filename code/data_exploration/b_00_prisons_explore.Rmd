@@ -113,7 +113,17 @@ shapefile.data %>% tally(POPULATION)
 shapefile.data %>% group_by(Type)  %>% tally(POPULATION)
 ```
 
+# How many incarcerated people included in state prisons (top 5)?
+```{r}
+shapefile.data %>% dplyr::filter(Type=='State') %>% group_by(STATE)  %>% tally(POPULATION) %>% arrange(desc(n))
+```
+
 # How many incarcerated people by state?
 ```{r}
 shapefile.data %>% group_by(STATE) %>% tally(POPULATION) %>% arrange(desc(n))
+```
+
+# How many incarcerated people by prison (top 5)?
+```{r}
+shapefile.data %>% dplyr::select(NAME, STATE, POPULATION) %>% arrange(desc(POPULATION)) %>% head(n=5)
 ```
