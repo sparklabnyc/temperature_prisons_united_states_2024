@@ -43,4 +43,5 @@ vignettes/*.pdf
 .DS_Store
 
 # wbgt large files
-data/wbgt/*
+data/wbgt/weighted_area_raster_prison_wbgtmax_daily_1982_2020.rds
+data/wbgt/weighted_area_raster_state_wbgtmax_daily_1982_2020.rds
