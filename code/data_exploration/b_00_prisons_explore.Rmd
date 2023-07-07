@@ -1,0 +1,119 @@
+---
+title: "Prisons explore"
+output: html_document
+---
+
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load specific plotting packages
+```{r, message=FALSE}
+# load required packages
+library(data.table)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(raster)
+library(sp)
+library(plyr)
+library(graticule)
+library(zoo)
+library(purrr)
+library(cowplot)
+```
+
+## Prepare map structure
+```{r}
+# for map theme to plot in ggplot
+theme_map = function(base_size=8 , base_family=""){
+    require(grid)
+    theme_bw(base_size=base_size,base_family=base_family) %+replace%
+    theme(axis.line=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    axis.title=element_blank(),
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid=element_blank(),
+    panel.margin=unit(0,"lines"),
+    plot.background=element_blank(),
+    legend.position = 'bottom'
+    )
+}
+```
+
+## Load US prison shapefile for mapping
+```{r}
+# load shapefile of entire United States by prison
+us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
+                           layer="Prison_Boundaries_Edited")
+
+us.main = spTransform(us.main, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+# fortify to prepare for plotting in ggplot
+map = fortify(us.main)
+
+# extract data from shapefile
+us.main@data$id = rownames(us.main@data) 
+shapefile.data = us.main@data
+
+# fix the weird Alabama mistake
+shapefile.data = shapefile.data %>%
+  dplyr::mutate(STATEFP=case_when(STATEFP=='10' & STATE=='AL'~ '01',
+                               TRUE ~ STATEFP))
+
+# merge selected data to map_create dataframe for colouring of ggplot
+USA.df = merge(map, shapefile.data, by='id')
+USA.df$prison_id = as.integer(as.character(USA.df$FID))
+```
+
+## Only choose prisons which are operational and with more than zero population
+```{r}
+shapefile.data = shapefile.data %>% 
+  dplyr::filter(STATUS=='OPEN') %>% 
+  dplyr::filter(POPULATION > 0) %>%
+  dplyr::rename(Type=TYPE) %>%
+  dplyr::mutate(Type1=case_when(Type=='COUNTY' ~ 'County',
+                               Type=='LOCAL' ~ 'Local',
+                               Type=='FEDERAL' ~ 'Federal',
+                               Type=='STATE' ~ 'State',
+                               TRUE ~ 'Other'))
+```
+
+## How many prisons included in total?
+```{r}
+shapefile.data %>% tally()
+```
+
+# How many prisons included by type?
+```{r}
+shapefile.data %>% group_by(Type) %>% tally()
+```
+
+# How many prisons by state?
+```{r}
+shapefile.data %>% group_by(STATE) %>% tally() %>% arrange(desc(n))
+```
+
+# How many incarcerated people?
+```{r}
+shapefile.data %>% tally(POPULATION)
+```
+
+# How many incarcerated people included by type?
+```{r}
+shapefile.data %>% group_by(Type)  %>% tally(POPULATION)
+```
+
+# How many incarcerated people by state?
+```{r}
+shapefile.data %>% group_by(STATE) %>% tally(POPULATION) %>% arrange(desc(n))
+```
