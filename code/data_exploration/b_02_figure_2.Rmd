@@ -183,7 +183,7 @@ USA.df.merged = USA.df.merged %>%
 ```{r}
 plot_start_year = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
-    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey',color='black',size=0.2) +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey20',color='black',size=0.2) +
     geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt))),size=1) +
     scale_color_gradientn(colors=(MetBrewer::met.brewer('OKeeffe2')), limits = c(0,max(USA.df.merged$wbgt_28_1982))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
@@ -221,7 +221,7 @@ plot.count.start.year.30 = plot_start_year(30,0)
 ```{r}
 plot_end_year = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
-    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey',color='black',size=0.2) +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey20',color='black',size=0.2) +
     geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',end_year_wbgt))),size=1) +
     scale_color_gradientn(colors=MetBrewer::met.brewer('OKeeffe2'), limits = c(0,max(USA.df.merged$wbgt_28_1982))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +
@@ -259,7 +259,7 @@ library(MetBrewer)
 
 plot_total_change = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
-    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey',color='black',size=0.2) +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey20',color='black',size=0.2) +
     geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_wbgt_',threshold_chosen))),size=1) +
     scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Cassatt2')), limits = c(-1*max(USA.df.merged$total_change_wbgt_28),max(USA.df.merged$total_change_wbgt_28))) +
     coord_fixed() + xlab('') + ylab('') + theme_bw() +

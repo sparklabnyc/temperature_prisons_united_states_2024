@@ -29,7 +29,7 @@ dat.wbgt.summarised = dat.wbgt %>%
 saveRDS(dat.wbgt.summarised,paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
 ```
 
-## Take Number of days in first and last year of data
+## Take Number of days in first year, last year and last 5 years of data
 ```{r}
 dat.wbgt.summarised.start = dat.wbgt.summarised %>%
   filter(year%in%c(start_year_wbgt)) %>%
@@ -40,6 +40,11 @@ dat.wbgt.summarised.end = dat.wbgt.summarised %>%
   filter(year%in%c(end_year_wbgt)) %>%
   dplyr::select(-year) %>%
   dplyr::rename_with(~ paste0(., "_", end_year_wbgt), -prison_id)
+
+dat.wbgt.summarised.last.5 = dat.wbgt.summarised %>%
+  filter(year%in%c((end_year_wbgt-4):end_year_wbgt)) %>%
+  dplyr::select(-year) %>%
+  dplyr::rename_with(~ paste0(., "_", as.numeric(end_year_wbgt-4), "_", end_year_wbgt), -prison_id)
 ```
 
 ## Trends in growth of number of day per year over time
@@ -88,6 +93,7 @@ dat.wbgt.summarised.regression.35 = dat.wbgt.summarised %>%
 ## Merge regression analyses into one data frame
 ```{r}
 dat.wbgt.summarised.regression.merged = left_join(dat.wbgt.summarised.start,dat.wbgt.summarised.end) %>%
+  left_join(.,dat.wbgt.summarised.last.5) %>%
   left_join(.,dat.wbgt.summarised.regression.26) %>%
   left_join(.,dat.wbgt.summarised.regression.28) %>%
   left_join(.,dat.wbgt.summarised.regression.30) %>%
