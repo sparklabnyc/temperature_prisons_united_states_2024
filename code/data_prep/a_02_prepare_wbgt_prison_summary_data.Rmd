@@ -43,7 +43,11 @@ dat.wbgt.summarised.end = dat.wbgt.summarised %>%
 
 dat.wbgt.summarised.last.5 = dat.wbgt.summarised %>%
   filter(year%in%c((end_year_wbgt-4):end_year_wbgt)) %>%
-  dplyr::select(-year) %>%
+  group_by(prison_id) %>%
+  summarise(wbgt_26=mean(wbgt_26),
+            wbgt_28=mean(wbgt_28),
+            wbgt_30=mean(wbgt_30),
+            wbgt_35=mean(wbgt_35)) %>%
   dplyr::rename_with(~ paste0(., "_", as.numeric(end_year_wbgt-4), "_", end_year_wbgt), -prison_id)
 ```
 

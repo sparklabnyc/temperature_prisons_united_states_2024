@@ -30,7 +30,32 @@ library(purrr)
 library(cowplot)
 ```
 
-## Load US prison shapefile for load details
+## Load WBGT regression file
+```{r}
+dat.wbgt.summarised.regression = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```
+
+## Prepare map structure
+```{r}
+# for map theme to plot in ggplot
+theme_map = function(base_size=10, base_family=""){
+    require(grid)
+    theme_bw(base_size=base_size,base_family=base_family) %+replace%
+    theme(axis.line=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    axis.title=element_blank(),
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid=element_blank(),
+    panel.margin=unit(0,"lines"),
+    plot.background=element_blank(),
+    legend.position = 'bottom'
+    )
+}
+```
+
+## Load US prison shapefile to load details and mapping
 ```{r}
 # load shapefile of entire United States by prison
 us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
@@ -116,7 +141,7 @@ plot_bar_chart = function(threshold_chosen,legend_chosen=1){
    geom_bar(data=dat.plot, 
                 aes(x=reorder(STATE, rank),
                               y=get(paste0('wbgt_',threshold_chosen,'_pop_mean')),fill=Type),stat = "identity") +
-   ylab('Annual hot-humid person-days for those incarcerated') + 
+   ylab(paste0('Mean annual number of dangerous hot-humid person-days\nfor those incarcerated during ',(end_year_wbgt-4),'-',end_year_wbgt)) + 
    xlab('State') + 
    scale_y_continuous(label=scales::comma) + 
    coord_flip() +
@@ -137,22 +162,117 @@ plot.bar.chart.28 = plot_bar_chart(28,1)
 plot.bar.chart.30 = plot_bar_chart(30,1)
 ```
 
+## Load US state shapefile for mapping
+```{r}
+us = readOGR(dsn=paste0(data.folder,"shapefiles/states"),layer="states")
+
+# reproject shapefile
+us_aea = spTransform(us, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+us_aea = us
+us_aea@data$id = rownames(us_aea@data)
+
+# only keep mainland US States
+us_aea = us_aea[us_aea$STATE_FIPS %in% states_included,]
+us_aea = spTransform(us_aea, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+us_aea = fortify(us_aea)
+```
+
+## Prepare summary maps
+```{r}
+# merge map with mean values
+USA.df.merged = left_join(USA.df,dat.wbgt.summarised.regression,by='prison_id')
+USA.df.merged = with(USA.df.merged, USA.df.merged[order(id,order),])
+```
+
+## Prepare colors and legends of maps
+```{r}
+legend_create_count_start_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',start_year_wbgt))
+legend_create_count_end_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',end_year_wbgt))
+legend_create_count_last_5_years = function(threshold)(paste0('Mean annual number of dangerous hot-humid days\nduring ',(end_year_wbgt-4),'-',end_year_wbgt))
+legend_create_annual_change = function(threshold)(paste0('Annual change during\n',start_year_wbgt,'-',end_year_wbgt ))
+legend_create_total_change = function(threshold)(paste0('Total change in annual number of dangerous hot-humid days\nduring ',start_year_wbgt,'-',end_year_wbgt))
+```
+
+## Only take open prisons and whose population we know
+```{r}
+USA.df.merged = USA.df.merged %>% 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) 
+```
+
+## Plot count in last 5 years map 
+```{r}
+plot_last_5_years = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,
+                                        color=get(paste0('wbgt_',threshold_chosen,'_',(end_year_wbgt-4),'_',end_year_wbgt))),size=1.2) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Tam')), limits = c(0,max(USA.df.merged$wbgt_28_2016_2020))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+          guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_last_5_years(threshold_chosen)),legend.text=element_text(size=5)) 
+    }  
+
+    return(p)
+
+}
+
+plot.count.end.year.legend = cowplot::get_legend(plot_last_5_years(26,1))
+
+plot.count.last.5.years.26 = plot_last_5_years(26,1)
+plot.count.last.5.years.28 = plot_last_5_years(28,1)
+plot.count.last.5.years.30 = plot_last_5_years(30,1)
+```
+
 ## 26°C: Plot
 ```{r}
 pdf(paste0(wbgtmax.folder,'Figure_1_26.pdf'),paper='a4r',width=0,height=0)
-print(plot.bar.chart.26)
+gridExtra::grid.arrange(as_grob(plot.bar.chart.26),
+                        as_grob(plot.count.last.5.years.26),
+                        widths = c(4, 4),
+                        layout_matrix = rbind(c(1, 2),
+                                              c(1, 2)),
+                        nrow=2) 
 dev.off()
 
-plot.bar.chart.26
+gridExtra::grid.arrange(as_grob(plot.bar.chart.26),
+                        as_grob(plot.count.last.5.years.26),
+                        widths = c(4, 4),
+                        layout_matrix = rbind(c(1, 2),
+                                              c(1, 2)),
+                        nrow=2) 
 ```
 
 ## 28°C: Plot
 ```{r}
 pdf(paste0(wbgtmax.folder,'Figure_1_28.pdf'),paper='a4r',width=0,height=0)
-print(plot.bar.chart.28)
+gridExtra::grid.arrange(as_grob(plot.bar.chart.28),
+                        as_grob(plot.count.last.5.years.28),
+                        widths = c(4, 4),
+                        layout_matrix = rbind(c(1, 2),
+                                              c(1, 2)),
+                        nrow=2) 
 dev.off()
 
-plot.bar.chart.28
+gridExtra::grid.arrange(as_grob(plot.bar.chart.28),
+                        as_grob(plot.count.last.5.years.28),
+                        widths = c(4, 4),
+                        layout_matrix = rbind(c(1, 2),
+                                              c(1, 2)),
+                        nrow=2) 
 ```
 
 ## Save output data

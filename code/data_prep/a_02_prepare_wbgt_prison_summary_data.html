@@ -374,8 +374,9 @@ display: none;
 <h2>Save file over time</h2>
 <pre class="r"><code>saveRDS(dat.wbgt.summarised,paste0(wbgt.folder,&#39;weighted_area_raster_prison_wbgtmax_daily_&#39;,start_year_wbgt,&#39;_&#39;,end_year_wbgt,&#39;_over_time.rds&#39;))</code></pre>
 </div>
-<div id="take-number-of-days-in-first-and-last-year-of-data" class="section level2">
-<h2>Take Number of days in first and last year of data</h2>
+<div id="take-number-of-days-in-first-year-last-year-and-last-5-years-of-data" class="section level2">
+<h2>Take Number of days in first year, last year and last 5 years of
+data</h2>
 <pre class="r"><code>dat.wbgt.summarised.start = dat.wbgt.summarised %&gt;%
   filter(year%in%c(start_year_wbgt)) %&gt;%
   dplyr::select(-year) %&gt;%
@@ -384,7 +385,16 @@ display: none;
 dat.wbgt.summarised.end = dat.wbgt.summarised %&gt;%
   filter(year%in%c(end_year_wbgt)) %&gt;%
   dplyr::select(-year) %&gt;%
-  dplyr::rename_with(~ paste0(., &quot;_&quot;, end_year_wbgt), -prison_id)</code></pre>
+  dplyr::rename_with(~ paste0(., &quot;_&quot;, end_year_wbgt), -prison_id)
+
+dat.wbgt.summarised.last.5 = dat.wbgt.summarised %&gt;%
+  filter(year%in%c((end_year_wbgt-4):end_year_wbgt)) %&gt;%
+  group_by(prison_id) %&gt;%
+  summarise(wbgt_26=mean(wbgt_26),
+            wbgt_28=mean(wbgt_28),
+            wbgt_30=mean(wbgt_30),
+            wbgt_35=mean(wbgt_35)) %&gt;%
+  dplyr::rename_with(~ paste0(., &quot;_&quot;, as.numeric(end_year_wbgt-4), &quot;_&quot;, end_year_wbgt), -prison_id)</code></pre>
 </div>
 <div id="trends-in-growth-of-number-of-day-per-year-over-time" class="section level2">
 <h2>Trends in growth of number of day per year over time</h2>
@@ -431,11 +441,13 @@ dat.wbgt.summarised.regression.35 = dat.wbgt.summarised %&gt;%
 <div id="merge-regression-analyses-into-one-data-frame" class="section level2">
 <h2>Merge regression analyses into one data frame</h2>
 <pre class="r"><code>dat.wbgt.summarised.regression.merged = left_join(dat.wbgt.summarised.start,dat.wbgt.summarised.end) %&gt;%
+  left_join(.,dat.wbgt.summarised.last.5) %&gt;%
   left_join(.,dat.wbgt.summarised.regression.26) %&gt;%
   left_join(.,dat.wbgt.summarised.regression.28) %&gt;%
   left_join(.,dat.wbgt.summarised.regression.30) %&gt;%
   left_join(.,dat.wbgt.summarised.regression.35)</code></pre>
 <pre><code>## Joining with `by = join_by(prison_id)`
+## Joining with `by = join_by(prison_id)`
 ## Joining with `by = join_by(prison_id)`
 ## Joining with `by = join_by(prison_id)`
 ## Joining with `by = join_by(prison_id)`
