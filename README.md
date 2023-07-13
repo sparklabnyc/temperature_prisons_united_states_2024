@@ -24,18 +24,6 @@ b_01_figure_1 - Plot Figure 1
 
 b_02_figure_2 - Plot Figure 2
 
-### Model running (models) list:
-
-c_XX_run_XX_model - run XX model
-
-### Model processing (model_processing) list:
-
-d_XX_process_XX_model - process XX model
-
-### Model plotting (model_plotting) list:
-
-e_XX_plot_XX_model - XX
-
 ## Other stuff
 
 note: please run create_folder_structure.R first to create folders which may not be there when first loaded.
