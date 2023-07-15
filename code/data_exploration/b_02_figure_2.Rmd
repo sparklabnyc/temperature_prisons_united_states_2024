@@ -138,11 +138,6 @@ dat.wbgt.summarised.merged.weighted.prison.state = left_join(dat.wbgt.summarised
                 wbgt_35_diff = wbgt_35_prison - wbgt_35_state)
 ```
 
-## Save heatmap data out
-```{r}
-readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state ,paste0(wbgtmax.folder,'Figure_2_heatmap.csv'))
-```
-
 ## Load US state shapefile for mapping
 ```{r}
 us = readOGR(dsn=paste0(data.folder,"shapefiles/states"),layer="states")
@@ -172,7 +167,7 @@ legend_create_count_start_year = function(threshold)(paste0('Number of dangerous
 legend_create_count_end_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',end_year_wbgt))
 legend_create_count_last_5_years = function(threshold)(paste0('Mean annual number of dangerous hot-humid days\nduring ',(end_year_wbgt-4),'-',end_year_wbgt))
 legend_create_annual_change = function(threshold)(paste0('Annual change during\n',start_year_wbgt,'-',end_year_wbgt ))
-legend_create_total_change = function(threshold)(paste0('Total change in annual number of dangerous hot-humid days\nduring ',start_year_wbgt,'-',end_year_wbgt))
+legend_create_total_change = function(threshold)(paste0('Total change in annual number of\ndangerous hot-humid days during ',start_year_wbgt,'-',end_year_wbgt))
 ```
 
 ## Only take open prisons and whose population we know
@@ -404,8 +399,29 @@ dev.off()
 
 gridExtra::grid.arrange(as_grob(plot.state.year.diff.28),
                         as_grob(plot.total.change.28),
-                        widths = c(4, 4),
+                        widths = c(3, 4),
                         layout_matrix = rbind(c(1, 2),
                                               c(1, 2)),
                         nrow=2)
+```
+
+## Save output data for Figure 2a
+```{r}
+dat.wbgt.summarised.merged.weighted.prison.state.output = dat.wbgt.summarised.merged.weighted.prison.state %>%
+  dplyr::select(state,year,wbgt_28_diff) %>%
+  dplyr::mutate(wbgt_28_diff=round(wbgt_28_diff,1))
+
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state.output ,paste0(wbgtmax.folder,'Figure_2a.csv'))
+```
+
+## Save output data for Figure 2b
+```{r} 
+dat.wbgt.summarised.regression.output = dat.wbgt.summarised.regression %>%
+  dplyr::select(prison_id,total_change_wbgt_28) %>%
+  dplyr::mutate(total_change_wbgt_28=round(total_change_wbgt_28,1)) %>%
+  left_join(shapefile.data,by=c('prison_id'='FID')) %>% 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
+  dplyr::select(prison_id,total_change_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
+
+readr::write_csv(dat.wbgt.summarised.regression.output ,paste0(wbgtmax.folder,'Figure_2b.csv'))
 ```

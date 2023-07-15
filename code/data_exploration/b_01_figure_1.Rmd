@@ -275,7 +275,7 @@ gridExtra::grid.arrange(as_grob(plot.bar.chart.28),
                         nrow=2) 
 ```
 
-## Save output data
+## Save output data for Figure 1a
 ```{r}
 dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded = dat.wbgt.summarised.merged.weighted.prison.5year.average %>%
   mutate(wbgt_26_pop_mean=round(wbgt_26_pop_mean),
@@ -294,7 +294,19 @@ dplyr::relocate(Type)
 
 dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded = rbind(dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded,
                                                                          dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded.total) %>%
-  arrange(STATEFP)
+  dplyr::arrange(STATEFP) %>%
+  dplyr::select(STATE,STATEFP,Type,wbgt_28_pop_mean)
 
-readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded ,paste0(wbgtmax.folder,'Figure_1.csv'))
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded ,paste0(wbgtmax.folder,'Figure_1a.csv'))
+```
+
+## Save output data for Figure 1b
+```{r}
+dat.wbgt.summarised.regression.output = dat.wbgt.summarised.regression %>%
+  dplyr::select(prison_id,wbgt_28_2016_2020) %>%
+  left_join(shapefile.data,by=c('prison_id'='FID')) %>% 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
+  dplyr::select(prison_id,wbgt_28_2016_2020,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
+
+readr::write_csv(dat.wbgt.summarised.regression.output ,paste0(wbgtmax.folder,'Figure_1b.csv'))
 ```
