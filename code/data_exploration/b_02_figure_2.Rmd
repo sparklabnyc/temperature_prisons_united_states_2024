@@ -370,39 +370,31 @@ plot.state.year.diff.30 = plot_state_year_difference(30,1)
 ## 26°C: Place arrangement of plots
 ```{r}
 pdf(paste0(wbgtmax.folder,'Figure_2_26.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(as_grob(plot.state.year.diff.26),
-                        as_grob(plot.total.change.26),
-                        widths = c(4, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2) 
+plot_grid(plot.state.year.diff.26, plot.total.change.26, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 dev.off()
 
-gridExtra::grid.arrange(as_grob(plot.state.year.diff.26),
-                        as_grob(plot.total.change.26),
-                        widths = c(4, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2) 
+plot_grid(plot.state.year.diff.26, plot.total.change.26, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 ```
 
 ## 28°C: Place arrangement of plots
 ```{r}
 pdf(paste0(wbgtmax.folder,'Figure_2_28.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(as_grob(plot.state.year.diff.28),
-                        as_grob(plot.total.change.28),
-                        widths = c(4, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2) 
+plot_grid(plot.state.year.diff.28, plot.total.change.28, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 dev.off()
 
-gridExtra::grid.arrange(as_grob(plot.state.year.diff.28),
-                        as_grob(plot.total.change.28),
-                        widths = c(3, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2)
+plot_grid(plot.state.year.diff.28, plot.total.change.28, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 ```
 
 ## Save output data for Figure 2a

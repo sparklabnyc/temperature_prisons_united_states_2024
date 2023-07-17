@@ -240,39 +240,31 @@ plot.count.last.5.years.30 = plot_last_5_years(30,1)
 ## 26°C: Plot
 ```{r}
 pdf(paste0(wbgtmax.folder,'Figure_1_26.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(as_grob(plot.bar.chart.26),
-                        as_grob(plot.count.last.5.years.26),
-                        widths = c(4, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2) 
+plot_grid(plot.bar.chart.26, plot.count.last.5.years.26, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 dev.off()
 
-gridExtra::grid.arrange(as_grob(plot.bar.chart.26),
-                        as_grob(plot.count.last.5.years.26),
-                        widths = c(4, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2) 
+plot_grid(plot.bar.chart.26, plot.count.last.5.years.26, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 ```
 
 ## 28°C: Plot
 ```{r}
 pdf(paste0(wbgtmax.folder,'Figure_1_28.pdf'),paper='a4r',width=0,height=0)
-gridExtra::grid.arrange(as_grob(plot.bar.chart.28),
-                        as_grob(plot.count.last.5.years.28),
-                        widths = c(4, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2) 
+plot_grid(plot.bar.chart.28, plot.count.last.5.years.28, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 dev.off()
 
-gridExtra::grid.arrange(as_grob(plot.bar.chart.28),
-                        as_grob(plot.count.last.5.years.28),
-                        widths = c(4, 4),
-                        layout_matrix = rbind(c(1, 2),
-                                              c(1, 2)),
-                        nrow=2) 
+plot_grid(plot.bar.chart.28, plot.count.last.5.years.28, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
 ```
 
 ## Save output data for Figure 1a
