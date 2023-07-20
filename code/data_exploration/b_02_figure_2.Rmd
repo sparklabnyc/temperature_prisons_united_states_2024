@@ -354,7 +354,7 @@ plot_state_year_difference = function(threshold_chosen,legend_chosen=0){
     p = p + 
       guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
                                  barheight = 1,title.vjust = 0.8,
-                                 title = "Population-weighted difference in annual number of\n hot-humid days between prisons and rest of state"),legend.text=element_text(size=15))
+                                 title = "Population-weighted difference in annual number of\n hot-humid days between carceral facilities and rest of state"),legend.text=element_text(size=15))
   }
   
   return(p)

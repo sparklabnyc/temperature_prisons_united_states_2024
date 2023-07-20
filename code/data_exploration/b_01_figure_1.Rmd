@@ -141,7 +141,7 @@ plot_bar_chart = function(threshold_chosen,legend_chosen=1){
    geom_bar(data=dat.plot, 
                 aes(x=reorder(STATE, rank),
                               y=get(paste0('wbgt_',threshold_chosen,'_pop_mean')),fill=Type),stat = "identity") +
-   ylab(paste0('Mean annual number of dangerous hot-humid person-days\nfor those incarcerated during ',(end_year_wbgt-4),'-',end_year_wbgt)) + 
+   ylab(paste0('Mean annual number of dangerous hot-humid person-days\nfor incarcerated people during ',(end_year_wbgt-4),'-',end_year_wbgt)) + 
    xlab('State') + 
    scale_y_continuous(label=scales::comma) + 
    coord_flip() +
@@ -189,7 +189,7 @@ USA.df.merged = with(USA.df.merged, USA.df.merged[order(id,order),])
 ```{r}
 legend_create_count_start_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',start_year_wbgt))
 legend_create_count_end_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',end_year_wbgt))
-legend_create_count_last_5_years = function(threshold)(paste0('Mean annual number of dangerous hot-humid days\nduring ',(end_year_wbgt-4),'-',end_year_wbgt))
+legend_create_count_last_5_years = function(threshold)(paste0('Mean annual number of\ndangerous hot-humid days during ',(end_year_wbgt-4),'-',end_year_wbgt))
 legend_create_annual_change = function(threshold)(paste0('Annual change during\n',start_year_wbgt,'-',end_year_wbgt ))
 legend_create_total_change = function(threshold)(paste0('Total change in annual number of dangerous hot-humid days\nduring ',start_year_wbgt,'-',end_year_wbgt))
 ```
