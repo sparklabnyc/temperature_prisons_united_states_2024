@@ -19,14 +19,31 @@ library(graticule)
 library(zoo)
 library(purrr)
 library(cowplot)
+library(MetBrewer)
 
 #1a.Load data 
 us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
                   layer="Prison_Boundaries_Edited")
 us.main = spTransform(us.main, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
 
-dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
-dat.wbgt.summarised.merged.weighted.state = readRDS(paste0(wbgt.folder,'weighted_area_raster_state_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+dat.wbgt.summarised.merged.weighted.state = readRDS(paste0(wbgt.folder,'weighted_area_raster_state_wbgtmax_daily_',
+                                                           start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+
+fed_prison_type <- read_csv(paste0(data.folder,"fed_prisons.csv")) %>% 
+  mutate(fed_prison_type = case_when(
+    ice_facility == 1 ~ "ICE facility",
+    usp == 1 ~ "USP",
+    fci == 1 ~ "FCI",
+    aux_camp == 1 ~ "Work camp",
+    private == 1 ~ "Private facility",
+    admin_facility == 1 ~ "Administrative facility"
+  ))
+
+dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',
+                                     end_year_wbgt,'_over_time.rds')) %>% 
+  right_join(fed_prison_type, by = c("prison_id" = "FID"))
+n_distinct(dat.wbgt.summarised$prison_id)
+colMeans(is.na(dat.wbgt.summarised))
 
 #1b.Fortify to prepare for plotting in ggplot
 map = fortify(us.main)
@@ -45,7 +62,7 @@ USA.df$prison_id = as.integer(as.character(USA.df$FID))
 dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
   dplyr::filter(STATUS=='OPEN') %>% 
   dplyr::filter(POPULATION > 0) %>%
-  dplyr::group_by(STATE,STATEFP,year, TYPE) %>%
+  dplyr::group_by(STATE,STATEFP,year, fed_prison_type) %>%
   dplyr::summarise(wbgt_26 = weighted.mean(wbgt_26,POPULATION),
                    wbgt_28 = weighted.mean(wbgt_28,POPULATION),
                    wbgt_30 = weighted.mean(wbgt_30,POPULATION),
@@ -84,16 +101,9 @@ dat.wbgt.summarised.merged.weighted.prison.state = left_join(dat.wbgt.summarised
                 wbgt_28_diff = wbgt_28_prison - wbgt_28_state,
                 wbgt_30_diff = wbgt_30_prison - wbgt_30_state,
                 wbgt_35_diff = wbgt_35_prison - wbgt_35_state) %>% 
-  filter(!TYPE %in% c("NOT AVAILABLE")) %>% 
-  filter(!is.na(TYPE)) %>% 
-  mutate(TYPE = case_when(
-    TYPE == "COUNTY" ~ "County",
-    TYPE == "FEDERAL" ~ 'Federal',
-    TYPE == "LOCAL" ~ 'Local',
-    TYPE == "MULTI" ~ 'Multiple types',
-    TYPE == "STATE" ~ 'State'
-  ))
+  filter(!is.na(fed_prison_type))
 
+###Supplementary Figure 3: Heatmap faceted by federal facility type 
 plot_state_type_year_difference = function(threshold_chosen,legend_chosen=0){
   p = ggplot() +
     geom_tile(data=dat.wbgt.summarised.merged.weighted.prison.state,
@@ -113,7 +123,7 @@ plot_state_type_year_difference = function(threshold_chosen,legend_chosen=0){
                        panel.border = element_rect(colour = "black"),strip.background = element_blank(),
                        legend.position = 'bottom',legend.justification='center',
                        legend.background = element_rect(fill="white", size=.5, linetype="dotted")) + 
-    facet_grid(~TYPE)
+    facet_wrap(~fed_prison_type)
   
   if(legend_chosen==0){
     p = p +
@@ -133,10 +143,66 @@ plot.heatmap.legend = cowplot::get_legend(plot_state_type_year_difference(28,1))
 plot.state.year.diff.28 = plot_state_type_year_difference(28,1)
 plot.state.year.diff.28
 
-jpeg(paste0(figures.folder, 'S_Figure_2.jpeg'), res = 300, height = 2000, width = 4000)
+jpeg(paste0(figures.folder, 'S_Figure_3.jpeg'), res = 300, height = 2000, width = 4000)
 plot.state.year.diff.28
 dev.off()
 
-pdf(paste0(figures.folder,'S_Figure_2.pdf'),paper='a4r',width=0,height=0)
+pdf(paste0(figures.folder,'S_Figure_3.pdf'),paper='a4r',width=0,height=0)
+plot.state.year.diff.28
+dev.off()
+
+###Supplementary Figure 4: barplot of federal facility type by state 
+dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %>%
+  dplyr::group_by(STATE,state,fed_prison_type) %>%
+  dplyr::summarise(wbgt_26_pop_mean = mean(wbgt_26_prison),
+                   wbgt_28_pop_mean = mean(wbgt_28_prison),
+                   wbgt_30_pop_mean = mean(wbgt_30_prison),
+                   wbgt_35_pop_mean = mean(wbgt_35_prison)) %>% 
+  dplyr::mutate(fed_prison_type=as.factor(fed_prison_type)) %>%
+  dplyr::mutate(fed_prison_type=factor(fed_prison_type,levels=c('ICE facility','Private facility','Administrative facility',
+                                                                'USP','Work camp','FCI'))) %>% 
+  filter(!is.na(fed_prison_type)) 
+
+plot_bar_chart = function(threshold_chosen,legend_chosen=1){ 
+  
+  # calculate rank of bars
+  dat.rank = dat.wbgt.summarised.merged.weighted.prison.5year.average %>%
+    group_by(STATE) %>%
+    dplyr::summarise(sum=sum(get(paste0('wbgt_',threshold_chosen,'_pop_mean')))) %>%
+    dplyr::arrange(sum) %>%
+    dplyr::mutate(rank=row_number())
+  
+  dat.plot = left_join(dat.wbgt.summarised.merged.weighted.prison.5year.average,dat.rank)
+  
+  p = ggplot() + 
+    geom_bar(data=dat.plot, 
+             aes(x=reorder(STATE, rank),
+                 y=get(paste0('wbgt_',threshold_chosen,'_pop_mean')),fill=fed_prison_type),stat = "identity") +
+    ylab(paste0('Mean annual number of dangerous hot-humid person-days\nfor incarcerated people during ',(end_year_wbgt-4),'-',end_year_wbgt)) + 
+    xlab('State') + 
+    scale_y_continuous(label=scales::comma) + 
+    coord_flip() +
+    scale_fill_manual(values=met.brewer('Lakota')) + 
+    theme_bw() + theme(text = element_text(size = 10), 
+                       panel.grid.major = element_blank(),axis.text.x = element_text(angle=0 , size=8, vjust=0.5), 
+                       plot.title = element_text(hjust = 0.5),panel.background = element_blank(), 
+                       panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), 
+                       panel.border = element_rect(colour = "black"),strip.background = element_blank(), 
+                       legend.position = 'bottom',legend.justification='center', 
+                       legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    labs(fill = "Type of Federal Facility")
+  
+  return(p) 
+}
+
+plot.bar.chart.28 = plot_bar_chart(28,1)
+plot.bar.chart.28
+
+jpeg(paste0(figures.folder, 'S_Figure_4.jpeg'), res = 300, height = 2000, width = 4000)
+plot.state.year.diff.28
+dev.off()
+
+pdf(paste0(figures.folder,'S_Figure_4.pdf'),paper='a4r',width=0,height=0)
 plot.state.year.diff.28
 dev.off()
