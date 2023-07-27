@@ -200,9 +200,9 @@ plot.bar.chart.28 = plot_bar_chart(28,1)
 plot.bar.chart.28
 
 jpeg(paste0(figures.folder, 'S_Figure_4.jpeg'), res = 300, height = 2000, width = 4000)
-plot.state.year.diff.28
+plot.bar.chart.28
 dev.off()
 
 pdf(paste0(figures.folder,'S_Figure_4.pdf'),paper='a4r',width=0,height=0)
-plot.state.year.diff.28
+plot.bar.chart.28
 dev.off()
