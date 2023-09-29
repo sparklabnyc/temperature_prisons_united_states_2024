@@ -87,9 +87,11 @@ dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wb
 
 ## Merge prison over time file with shapefile data then summarise by state and year weighted by prison population
 ```{r}
-dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
+dat.wbgt.summarised.merged.weighted.prison.more.info = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
   dplyr::filter(STATUS=='OPEN') %>% 
-  dplyr::filter(POPULATION > 0) %>%
+  dplyr::filter(POPULATION > 0) 
+
+dat.wbgt.summarised.merged.weighted.prison = dat.wbgt.summarised.merged.weighted.prison.more.info %>%
   dplyr::group_by(STATE,STATEFP,year) %>%
   dplyr::summarise(wbgt_26 = weighted.mean(wbgt_26,POPULATION),
             wbgt_28 = weighted.mean(wbgt_28,POPULATION),
@@ -120,7 +122,7 @@ dat.wbgt.summarised.merged.weighted.prison =
 dat.wbgt.summarised.merged.weighted.state = readRDS(paste0(wbgt.folder,'weighted_area_raster_state_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
 ```
 
-## Merge prison vs. state to compare
+## Merge state-average prison vs. state to compare
 ```{r}
 dat.wbgt.summarised.merged.weighted.prison = dat.wbgt.summarised.merged.weighted.prison %>%
   dplyr::rename(wbgt_26_prison=wbgt_26,wbgt_28_prison=wbgt_28,wbgt_30_prison=wbgt_30,wbgt_35_prison=wbgt_35) %>%
@@ -136,6 +138,74 @@ dat.wbgt.summarised.merged.weighted.prison.state = left_join(dat.wbgt.summarised
                 wbgt_28_diff = wbgt_28_prison - wbgt_28_state,
                 wbgt_30_diff = wbgt_30_prison - wbgt_30_state,
                 wbgt_35_diff = wbgt_35_prison - wbgt_35_state)
+```
+
+
+## Merge individual prison vs. state to compare
+```{r}
+dat.wbgt.summarised.merged.individual.prison.state = dat.wbgt.summarised.merged.weighted.prison.more.info %>%
+  dplyr::select(prison_id, year, wbgt_26, wbgt_28, wbgt_30, wbgt_35, STATEFP) %>%
+  dplyr::rename(wbgt_26_prison=wbgt_26,wbgt_28_prison=wbgt_28,wbgt_30_prison=wbgt_30,wbgt_35_prison=wbgt_35) %>%
+  dplyr::rename(state=STATEFP) 
+
+dat.wbgt.summarised.merged.individual.prison.state = left_join(dat.wbgt.summarised.merged.individual.prison.state,
+                                                               dat.wbgt.summarised.merged.weighted.state,
+                                                               by=c('state','year')) %>%
+  dplyr::mutate(wbgt_26_diff = wbgt_26_prison - wbgt_26_state,
+                wbgt_28_diff = wbgt_28_prison - wbgt_28_state,
+                wbgt_30_diff = wbgt_30_prison - wbgt_30_state,
+                wbgt_35_diff = wbgt_35_prison - wbgt_35_state)
+```
+
+## Trends in growth of individual prison disparity per year over time
+```{r}
+dat.wbgt.summarised.regression.26 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_26_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_26=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_26=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_26,total_change_disparity_wbgt_26)
+
+dat.wbgt.summarised.regression.28 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_28_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_28=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_28=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_28,total_change_disparity_wbgt_28)
+
+dat.wbgt.summarised.regression.30 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_30_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_30=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_30=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_30,total_change_disparity_wbgt_30)
+
+dat.wbgt.summarised.regression.35 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_35_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_35=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_35=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_35,total_change_disparity_wbgt_35)
+```
+
+## Merge regression analyses into one data frame
+```{r}
+dat.wbgt.summarised.regression.merged = 
+  left_join(dat.wbgt.summarised.regression.26,dat.wbgt.summarised.regression.28) %>%
+  left_join(.,dat.wbgt.summarised.regression.30) %>%
+  left_join(.,dat.wbgt.summarised.regression.35)
 ```
 
 ## Load US state shapefile for mapping
@@ -154,6 +224,12 @@ us_aea = spTransform(us_aea, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0
 us_aea = fortify(us_aea)
 ```
 
+## Add disparity regression to other regression data
+```{r}
+dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,
+                                           dat.wbgt.summarised.regression.merged)
+```
+
 ## Prepare summary maps
 ```{r}
 # merge map with mean values
@@ -168,6 +244,8 @@ legend_create_count_end_year = function(threshold)(paste0('Number of dangerous h
 legend_create_count_last_5_years = function(threshold)(paste0('Mean annual number of dangerous hot-humid days\nduring ',(end_year_wbgt-4),'-',end_year_wbgt))
 legend_create_annual_change = function(threshold)(paste0('Annual change during\n',start_year_wbgt,'-',end_year_wbgt ))
 legend_create_total_change = function(threshold)(paste0('Total change in annual number of\ndangerous hot-humid days during ',start_year_wbgt,'-',end_year_wbgt))
+legend_create_annual_disparity_change = function(threshold)(paste0('Annual change in disparity during\n',start_year_wbgt,'-',end_year_wbgt ))
+legend_create_total_disparity_change = function(threshold)(paste0('Total change in disparity of annual number of\ndangerous hot-humid days during ',start_year_wbgt,'-',end_year_wbgt))
 ```
 
 ## Only take open prisons and whose population we know
@@ -287,6 +365,43 @@ plot.total.change.28 = plot_total_change(28,1)
 plot.total.change.30 = plot_total_change(30,1)
 ```
 
+## Plot total change in disparity to state map 
+```{r}
+library(MetBrewer)
+
+plot_total_disparity_change = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_disparity_wbgt_',threshold_chosen))),size=1) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Isfahan1')), limits = c(-1*max(USA.df.merged$total_change_disparity_wbgt_28),max(USA.df.merged$total_change_disparity_wbgt_28))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(), legend.text=element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+      guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_total_disparity_change(threshold_chosen)),legend.text=element_text(size=5))
+  }
+  
+  return(p)
+}
+
+plot.total.disparity.change.legend = cowplot::get_legend(plot_total_disparity_change(26,1))
+
+plot.total.disparity.change.26 = plot_total_disparity_change(26,1)
+plot.total.disparity.change.28 = plot_total_disparity_change(28,1)
+plot.total.disparity.change.30 = plot_total_disparity_change(30,1)
+```
+
 ## Plot count in last 5 years map 
 ```{r}
 plot_last_5_years = function(threshold_chosen,legend_chosen=0){
@@ -369,32 +484,62 @@ plot.state.year.diff.30 = plot_state_year_difference(30,1)
 
 ## 26°C: Place arrangement of plots
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_2_26.pdf'),paper='a4r',width=0,height=0)
-plot_grid(plot.state.year.diff.26, plot.total.change.26, 
+nested.26 = plot_grid(plot.total.change.26, plot.total.disparity.change.26,
+          nrow = 2,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
+          labels = c('(b)', '(c)'))
+
+plot.26 = plot_grid(plot.state.year.diff.26, nested.26,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'Figure_2_26.pdf'),paper='a4r',width=0,height=0)
+plot.26
 dev.off()
 
-plot_grid(plot.state.year.diff.26, plot.total.change.26, 
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
+plot.26
 ```
 
 ## 28°C: Place arrangement of plots
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_2_28.pdf'),paper='a4r',width=0,height=0)
-plot_grid(plot.state.year.diff.28, plot.total.change.28, 
+nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
+          nrow = 2,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
+          labels = c('(b)', '(c)'))
+
+plot.28 = plot_grid(plot.state.year.diff.28, nested.28,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'Figure_2_28.pdf'),paper='a4r',width=0,height=0)
+plot.28
 dev.off()
 
-plot_grid(plot.state.year.diff.28, plot.total.change.28, 
+plot.28
+```
+
+## 30°C: Place arrangement of plots
+```{r}
+nested.30 = plot_grid(plot.total.change.30, plot.total.disparity.change.30,
+          nrow = 2,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
+          labels = c('(b)', '(c)'))
+
+plot.30 = plot_grid(plot.state.year.diff.30, nested.30,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'Figure_2_30.pdf'),paper='a4r',width=0,height=0)
+plot.30
+dev.off()
+
+plot.30
 ```
 
 ## Save output data for Figure 2a
@@ -416,4 +561,16 @@ dat.wbgt.summarised.regression.output = dat.wbgt.summarised.regression %>%
   dplyr::select(prison_id,total_change_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
 
 readr::write_csv(dat.wbgt.summarised.regression.output ,paste0(wbgtmax.folder,'Figure_2b.csv'))
+```
+
+## Save output data for Figure 2c
+```{r} 
+dat.wbgt.summarised.regression.disparity.output = dat.wbgt.summarised.regression %>%
+  dplyr::select(prison_id,total_change_disparity_wbgt_28) %>%
+  dplyr::mutate(total_change_disparity_wbgt_28=round(total_change_disparity_wbgt_28,1)) %>%
+  left_join(shapefile.data,by=c('prison_id'='FID')) %>% 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
+  dplyr::select(prison_id,total_change_disparity_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
+
+readr::write_csv(dat.wbgt.summarised.regression.disparity.output ,paste0(wbgtmax.folder,'Figure_2c.csv'))
 ```
