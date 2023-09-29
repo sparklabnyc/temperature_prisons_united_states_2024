@@ -267,6 +267,21 @@ plot_grid(plot.bar.chart.28, plot.count.last.5.years.28,
           labels = c('(a)', '(b)'))
 ```
 
+## 30°C: Plot
+```{r}
+pdf(paste0(wbgtmax.folder,'Figure_1_30.pdf'),paper='a4r',width=0,height=0)
+plot_grid(plot.bar.chart.30, plot.count.last.5.years.30, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
+dev.off()
+
+plot_grid(plot.bar.chart.30, plot.count.last.5.years.30, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
+```
+
 ## Save output data for Figure 1a
 ```{r}
 dat.wbgt.summarised.merged.weighted.prison.5year.average.rounded = dat.wbgt.summarised.merged.weighted.prison.5year.average %>%

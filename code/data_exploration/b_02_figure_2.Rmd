@@ -482,6 +482,57 @@ plot.state.year.diff.28 = plot_state_year_difference(28,1)
 plot.state.year.diff.30 = plot_state_year_difference(30,1)
 ```
 
+## Plot state-wide population-weighted annual difference sorted by average difference
+## IN PROGRESS!
+```{r}
+plot_state_year_difference_sorted = function(threshold_chosen,legend_chosen=0){
+  
+  dat.wbgt.summarised.merged.weighted.prison.state.sorted = dat.wbgt.summarised.merged.weighted.prison.state %>%
+    # group_by(STATE) %>%
+    # dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')))) %>%
+    dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
+  
+  p = ggplot() +
+    geom_tile(data=dat.wbgt.summarised.merged.weighted.prison.state.sorted,
+                 aes(x=year,y=STATE.sorted,fill=get(paste0('wbgt_',threshold_chosen,'_diff'))),size=1) +
+    guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
+                                 barheight = 1,title.vjust = 0.8,
+                                 title = "Difference in number of hot-humid days"),
+                                 legend.text=element_text(size=15)) +
+    xlab('Year') +
+    ylab('State') +
+    ylim(levels(dat.wbgt.summarised.merged.weighted.prison.state.sorted$STATE.sorted)) +
+    scale_fill_gradient2(low=met.brewer('Demuth')[10],mid='white',high=met.brewer('Demuth')[1],
+                         na.value="white",guide = guide_legend(nrow = 1)) +
+    theme_bw() + theme(text = element_text(size = 10),
+    panel.grid.major = element_blank(),axis.text.x = element_text(angle=90 , size=8, vjust=0.5),
+    plot.title = element_text(hjust = 0.5),panel.background = element_blank(),
+    panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    panel.border = element_rect(colour = "black"),strip.background = element_blank(),
+    legend.position = 'bottom',legend.justification='center',
+    legend.background = element_rect(fill="white", size=.5, linetype="dotted"))
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(fill=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p + 
+      guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
+                                 barheight = 1,title.vjust = 0.8,
+                                 title = "Population-weighted difference in annual number of\n hot-humid days between carceral facilities and rest of state"),legend.text=element_text(size=15))
+  }
+  
+  return(p)
+}
+
+plot.heatmap.legend = cowplot::get_legend(plot_state_year_difference_sorted(28,1))
+
+plot.state.year.diff.26.sorted = plot_state_year_difference_sorted(26,1)
+plot.state.year.diff.28.sorted = plot_state_year_difference_sorted(28,1)
+plot.state.year.diff.30.sorted = plot_state_year_difference_sorted(30,1)
+```
+
 ## 26°C: Place arrangement of plots
 ```{r}
 nested.26 = plot_grid(plot.total.change.26, plot.total.disparity.change.26,
