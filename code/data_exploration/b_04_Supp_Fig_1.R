@@ -70,13 +70,13 @@ plot_grid(eco.reg.1, eco.reg.2, eco.reg.3, eco.reg.4,
           ncol = 2, nrow = 2)
 
 
-jpeg(paste0(figures.folder, 'S_Figure_1.jpeg'), res = 300, height = 2000, width = 4000)
+jpeg(paste0(wbgtmax.folder, 'S_Figure_1.jpeg'), res = 300, height = 2000, width = 4000)
 plot_grid(eco.reg.1, eco.reg.2, eco.reg.3, eco.reg.4,
           labels = c("A", "B", "C", "D"),
           ncol = 2, nrow = 2)
 dev.off()
 
-pdf(paste0(figures.folder,'S_Figure_1.pdf'),paper='a4r',width=0,height=0)
+pdf(paste0(wbgtmax.folder,'S_Figure_1.pdf'),paper='a4r',width=0,height=0)
 plot_grid(eco.reg.1, eco.reg.2, eco.reg.3, eco.reg.4,
           labels = c("A", "B", "C", "D"),
           ncol = 2, nrow = 2)

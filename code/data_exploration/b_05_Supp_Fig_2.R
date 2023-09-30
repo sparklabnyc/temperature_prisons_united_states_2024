@@ -133,10 +133,10 @@ plot.heatmap.legend = cowplot::get_legend(plot_state_type_year_difference(28,1))
 plot.state.year.diff.28 = plot_state_type_year_difference(28,1)
 plot.state.year.diff.28
 
-jpeg(paste0(figures.folder, 'S_Figure_2.jpeg'), res = 300, height = 2000, width = 4000)
+jpeg(paste0(wbgtmax.folder, 'S_Figure_2.jpeg'), res = 300, height = 2000, width = 4000)
 plot.state.year.diff.28
 dev.off()
 
-pdf(paste0(figures.folder,'S_Figure_2.pdf'),paper='a4r',width=0,height=0)
+pdf(paste0(wbgtmax.folder,'S_Figure_2.pdf'),paper='a4r',width=0,height=0)
 plot.state.year.diff.28
 dev.off()
