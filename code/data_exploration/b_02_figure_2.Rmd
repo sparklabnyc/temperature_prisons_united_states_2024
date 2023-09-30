@@ -483,14 +483,16 @@ plot.state.year.diff.30 = plot_state_year_difference(30,1)
 ```
 
 ## Plot state-wide population-weighted annual difference sorted by average difference
-## IN PROGRESS!
 ```{r}
 plot_state_year_difference_sorted = function(threshold_chosen,legend_chosen=0){
   
   dat.wbgt.summarised.merged.weighted.prison.state.sorted = dat.wbgt.summarised.merged.weighted.prison.state %>%
-    # group_by(STATE) %>%
-    # dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')))) %>%
-    dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
+    group_by(STATE) %>%
+    dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')))) %>%
+    dplyr::arrange((mean)) %>%
+    ungroup() %>%
+    dplyr::mutate(STATE.sorted = forcats::fct_inorder(STATE, ordered=TRUE))
+    # dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
   
   p = ggplot() +
     geom_tile(data=dat.wbgt.summarised.merged.weighted.prison.state.sorted,
@@ -591,6 +593,66 @@ plot.30
 dev.off()
 
 plot.30
+```
+
+## 26°C: Place arrangement of plots (heatmap arranged by average disparity)
+```{r}
+nested.26 = plot_grid(plot.total.change.26, plot.total.disparity.change.26,
+          nrow = 2,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(b)', '(c)'))
+
+plot.26.sorted = plot_grid(plot.state.year.diff.26.sorted, nested.26,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'Figure_2_26_sorted.pdf'),paper='a4r',width=0,height=0)
+plot.26.sorted
+dev.off()
+
+plot.26.sorted
+```
+
+## 28°C: Place arrangement of plots (heatmap arranged by average disparity)
+```{r}
+nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
+          nrow = 2,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(b)', '(c)'))
+
+plot.28.sorted = plot_grid(plot.state.year.diff.28.sorted, nested.28,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'Figure_2_28_sorted.pdf'),paper='a4r',width=0,height=0)
+plot.28.sorted
+dev.off()
+
+plot.28.sorted
+```
+
+## 30°C: Place arrangement of plots (heatmap arranged by average disparity)
+```{r}
+nested.30 = plot_grid(plot.total.change.30, plot.total.disparity.change.30,
+          nrow = 2,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(b)', '(c)'))
+
+plot.30.sorted = plot_grid(plot.state.year.diff.30.sorted, nested.30,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'Figure_2_30_sorted.pdf'),paper='a4r',width=0,height=0)
+plot.30.sorted
+dev.off()
+
+plot.30.sorted
 ```
 
 ## Save output data for Figure 2a
