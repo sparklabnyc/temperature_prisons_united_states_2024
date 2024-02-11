@@ -4,7 +4,7 @@ Cascade Tuholske, Victoria D. Lynch, Raenita Spriggs, Yoonjung Ahn, Colin Raymon
 
 ## Introduction
 
-## Code (in progress)
+## Code
 
 ### Data preparation (data_prep) list:
 
