@@ -1,6 +1,6 @@
-# Trends and Disparities of Dangerous Humid Heat Exposure Among Incarcerated People in the United States
+# Hazardous heat exposure among incarcerated people in the United States
 
-Cascade Tuholske, Victoria D. Lynch, Raenita Spriggs, Anne E. Nigra, Robbie M. Parks
+Cascade Tuholske, Victoria D. Lynch, Raenita Spriggs, Yoonjung Ahn, Colin Raymond, Anne E. Nigra, Robbie M. Parks
 
 ## Introduction
 
