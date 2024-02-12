@@ -108,7 +108,11 @@ dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shape
 dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.merged.weighted.prison %>%
   dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %>%
   dplyr::group_by(STATE,STATEFP,TYPE) %>%
-  dplyr::summarise(wbgt_26_pop_mean = mean(wbgt_26_pop),
+  dplyr::summarise(wbgt_26_mean = mean(wbgt_26),
+                   wbgt_28_mean = mean(wbgt_28),
+                   wbgt_30_mean = mean(wbgt_30),
+                   wbgt_35_mean = mean(wbgt_35),
+                   wbgt_26_pop_mean = mean(wbgt_26_pop),
                    wbgt_28_pop_mean = mean(wbgt_28_pop),
                    wbgt_30_pop_mean = mean(wbgt_30_pop),
                    wbgt_35_pop_mean = mean(wbgt_35_pop)) %>%

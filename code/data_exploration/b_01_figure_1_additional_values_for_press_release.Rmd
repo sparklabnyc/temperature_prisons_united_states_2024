@@ -1,0 +1,125 @@
+---
+title: "Figure 1 additional values for press release"
+output: html_document
+---
+
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load specific plotting packages
+```{r, message=FALSE}
+# load required packages
+library(data.table)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(raster)
+library(sp)
+library(plyr)
+library(graticule)
+library(zoo)
+library(purrr)
+library(cowplot)
+```
+
+## Load WBGT regression file
+```{r}
+dat.wbgt.summarised.regression = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```
+
+## Prepare map structure
+```{r}
+# for map theme to plot in ggplot
+theme_map = function(base_size=10, base_family=""){
+    require(grid)
+    theme_bw(base_size=base_size,base_family=base_family) %+replace%
+    theme(axis.line=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    axis.title=element_blank(),
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid=element_blank(),
+    panel.margin=unit(0,"lines"),
+    plot.background=element_blank(),
+    legend.position = 'bottom'
+    )
+}
+```
+
+## Load US prison shapefile to load details and mapping
+```{r}
+# load shapefile of entire United States by prison
+us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
+                           layer="Prison_Boundaries_Edited")
+
+us.main = spTransform(us.main, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+# fortify to prepare for plotting in ggplot
+map = fortify(us.main)
+
+# extract data from shapefile
+us.main@data$id = rownames(us.main@data) 
+shapefile.data = us.main@data
+
+# fix the weird Alabama mistake
+shapefile.data = shapefile.data %>%
+  dplyr::mutate(STATEFP=case_when(STATEFP=='10' & STATE=='AL'~ '01',
+                               TRUE ~ STATEFP))
+
+# merge selected data to map_create dataframe for colouring of ggplot
+USA.df = merge(map, shapefile.data, by='id')
+USA.df$prison_id = as.integer(as.character(USA.df$FID))
+```
+
+## Load WBGT over time file
+```{r}
+dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+```
+
+## Only take for last 5 years and sum up number of days
+```{r}
+dat.wbgt.summarised = dat.wbgt.summarised %>%
+  dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %>%
+  # dplyr::mutate(wbgt_28 = ifelse(wbgt_28>1,1,0)) %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::summarise(wbgt_28 = sum(wbgt_28))
+```
+
+## Merge prison over time file with shapefile data 
+```{r}
+dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
+  dplyr::filter(STATUS=='OPEN') %>% 
+  dplyr::filter(POPULATION > 0) 
+```
+
+## Number of incarcerated people who experience at least 1 day of WBGT > 28 during 2016-2020
+```{r}
+dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(wbgt_28 >= 1) %>%
+  dplyr::summarise(population = sum(POPULATION))
+```
+
+## Which carceral facilities experienced at least 1 day of WBGT > 28 during 2016-2020?
+```{r}
+prison.ids = dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(wbgt_28 >= 1) %>%
+  pull(prison_id) %>%
+  unique() %>%
+  sort()
+```
+
+## Average number of days WBGT > 28 in each year during 2016-2020 for incarcerated people who experience at least 1 day of WBGT > 28 during 2016-2020
+```{r}
+dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(prison_id %in% prison.ids) %>%
+  dplyr::summarise(wbgt_28 = median(wbgt_28))
+```

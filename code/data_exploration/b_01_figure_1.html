@@ -409,13 +409,18 @@ us.main = readOGR(dsn=paste0(project.folder,&quot;data/shapefiles/Prison_Boundar
 <pre><code>## Warning: OGR support is provided by the sf and terra packages among others</code></pre>
 <pre><code>## Warning: OGR support is provided by the sf and terra packages among others</code></pre>
 <pre><code>## OGR data source with driver: ESRI Shapefile 
-## Source: &quot;/Users/rmiparks/git/temperature_prisons_2022    /data/shapefiles/Prison_Boundaries&quot;, layer: &quot;Prison_Boundaries_Edited&quot;
+## Source: &quot;/Users/rmiparks/git/temperature_prisons_united_states_2024/data/shapefiles/Prison_Boundaries&quot;, layer: &quot;Prison_Boundaries_Edited&quot;
 ## with 6640 features
 ## It has 33 fields</code></pre>
 <pre class="r"><code>us.main = spTransform(us.main, CRS(&quot;+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs&quot;))
 
 # fortify to prepare for plotting in ggplot
 map = fortify(us.main)</code></pre>
+<pre><code>## Warning: `fortify(&lt;SpatialPolygonsDataFrame&gt;)` was deprecated in ggplot2 3.4.4.
+## ℹ Please migrate to sf.
+## This warning is displayed once every 8 hours.
+## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
+## generated.</code></pre>
 <pre><code>## Regions defined for each Polygons</code></pre>
 <pre class="r"><code># extract data from shapefile
 us.main@data$id = rownames(us.main@data) 
@@ -459,7 +464,11 @@ state and year weighted by prison population</h2>
 <pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.merged.weighted.prison %&gt;%
   dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %&gt;%
   dplyr::group_by(STATE,STATEFP,TYPE) %&gt;%
-  dplyr::summarise(wbgt_26_pop_mean = mean(wbgt_26_pop),
+  dplyr::summarise(wbgt_26_mean = mean(wbgt_26),
+                   wbgt_28_mean = mean(wbgt_28),
+                   wbgt_30_mean = mean(wbgt_30),
+                   wbgt_35_mean = mean(wbgt_35),
+                   wbgt_26_pop_mean = mean(wbgt_26_pop),
                    wbgt_28_pop_mean = mean(wbgt_28_pop),
                    wbgt_30_pop_mean = mean(wbgt_30_pop),
                    wbgt_35_pop_mean = mean(wbgt_35_pop)) %&gt;%
@@ -531,7 +540,7 @@ plot.bar.chart.26 = plot_bar_chart(26,1)</code></pre>
 <pre><code>## Warning: OGR support is provided by the sf and terra packages among others</code></pre>
 <pre><code>## Warning: OGR support is provided by the sf and terra packages among others</code></pre>
 <pre><code>## OGR data source with driver: ESRI Shapefile 
-## Source: &quot;/Users/rmiparks/git/temperature_prisons_2022    /data/shapefiles/states&quot;, layer: &quot;states&quot;
+## Source: &quot;/Users/rmiparks/git/temperature_prisons_united_states_2024/data/shapefiles/states&quot;, layer: &quot;states&quot;
 ## with 51 features
 ## It has 5 fields</code></pre>
 <pre class="r"><code># reproject shapefile
