@@ -1,6 +1,7 @@
 ---
-title: "Figure 2"
+title: "b_07_supp_figure_5_and_6"
 output: html_document
+date: "2024-02-14"
 ---
 
 ## First step to load packages and file locations etc.
@@ -535,77 +536,43 @@ plot.state.year.diff.28.sorted = plot_state_year_difference_sorted(28,1)
 plot.state.year.diff.30.sorted = plot_state_year_difference_sorted(30,1)
 ```
 
-
-## 28°C: Place arrangement of plots
+## 26°C: Place arrangement of plots
 ```{r}
-nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
+nested.26 = plot_grid(plot.total.change.26, plot.total.disparity.change.26,
           nrow = 2,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(b)', '(c)'))
 
-plot.28 = plot_grid(plot.state.year.diff.28, nested.28,
+plot.26 = plot_grid(plot.state.year.diff.26, nested.26,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(a)'))
 
-pdf(paste0(wbgtmax.folder,'Figure_2.pdf'),paper='a4r',width=0,height=0)
-plot.28
+pdf(paste0(wbgtmax.folder,'S_Figure_5.pdf'),paper='a4r',width=0,height=0)
+plot.26
 dev.off()
 
-plot.28
+plot.26
 ```
 
-
-## 28°C: Place arrangement of plots (heatmap arranged by average disparity)
+## 30°C: Place arrangement of plots
 ```{r}
-nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
+nested.30 = plot_grid(plot.total.change.30, plot.total.disparity.change.30,
           nrow = 2,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(b)', '(c)'))
 
-plot.28.sorted = plot_grid(plot.state.year.diff.28.sorted, nested.28,
+plot.30 = plot_grid(plot.state.year.diff.30, nested.30,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(a)'))
 
-pdf(paste0(wbgtmax.folder,'Figure_2_28_sorted.pdf'),paper='a4r',width=0,height=0)
-plot.28.sorted
+pdf(paste0(wbgtmax.folder,'S_Figure_6.pdf'),paper='a4r',width=0,height=0)
+plot.30
 dev.off()
 
-plot.28.sorted
+plot.30
 ```
 
-## Save output data for Figure 2a
-```{r}
-dat.wbgt.summarised.merged.weighted.prison.state.output = dat.wbgt.summarised.merged.weighted.prison.state %>%
-  dplyr::select(state,year,wbgt_28_diff) %>%
-  dplyr::mutate(wbgt_28_diff=round(wbgt_28_diff,1))
-
-readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state.output ,paste0(wbgtmax.folder,'Figure_2a.csv'))
-```
-
-## Save output data for Figure 2b
-```{r} 
-dat.wbgt.summarised.regression.output = dat.wbgt.summarised.regression %>%
-  dplyr::select(prison_id,total_change_wbgt_28) %>%
-  dplyr::mutate(total_change_wbgt_28=round(total_change_wbgt_28,1)) %>%
-  left_join(shapefile.data,by=c('prison_id'='FID')) %>% 
-  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
-  dplyr::select(prison_id,total_change_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
-
-readr::write_csv(dat.wbgt.summarised.regression.output ,paste0(wbgtmax.folder,'Figure_2b.csv'))
-```
-
-## Save output data for Figure 2c
-```{r} 
-dat.wbgt.summarised.regression.disparity.output = dat.wbgt.summarised.regression %>%
-  dplyr::select(prison_id,total_change_disparity_wbgt_28) %>%
-  dplyr::mutate(total_change_disparity_wbgt_28=round(total_change_disparity_wbgt_28,1)) %>%
-  left_join(shapefile.data,by=c('prison_id'='FID')) %>% 
-  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
-  dplyr::select(prison_id,total_change_disparity_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
-
-readr::write_csv(dat.wbgt.summarised.regression.disparity.output ,paste0(wbgtmax.folder,'Figure_2c.csv'))
-```

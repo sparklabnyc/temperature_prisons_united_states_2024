@@ -142,7 +142,7 @@ county_person_days %>% dplyr::select(county_person_days, percent_county_person_d
 
 ## Number of incarcerated people in FL
 ```{r}
-shapefile.data %>% filter(STATE == "FL" & Type == "STATE") %>% 
+shapefile.data %>% dplyr::filter(STATE == "FL" & Type == "STATE") %>% 
   mutate(incar_state_pop = sum(POPULATION)) %>% 
   dplyr::select(incar_state_pop) %>% distinct()
 ```
