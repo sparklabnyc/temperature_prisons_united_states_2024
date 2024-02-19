@@ -24,6 +24,16 @@ b_01_figure_1 - Plot Figure 1
 
 b_02_figure_2 - Plot Figure 2
 
+b_03_facilities_numbers_for_manuscript - Calculate all values for main manuscript
+
+b_04_supp_figure_1 - Plot Supp.Figure 1
+
+b_05_supp_figure_2 - Plot Supp. Figure 2
+
+b_06_supp_figure_3_and_4 - Plot Supp.Figure 3 (26°C) and Supp.Figure 4 (30°C)
+
+b_07_supp_figure_5_and_6 - Plot Supp.Figure 5 (26°C) and Supp.Figure 6 (30°C)
+
 ## Other stuff
 
 note: please run create_folder_structure.R first to create folders which may not be there when first loaded.
