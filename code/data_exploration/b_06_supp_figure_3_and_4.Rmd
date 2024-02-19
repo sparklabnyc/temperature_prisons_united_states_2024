@@ -163,7 +163,6 @@ plot_bar_chart = function(threshold_chosen,legend_chosen=1){
 }
 
 plot.bar.chart.26 = plot_bar_chart(26,1)
-plot.bar.chart.28 = plot_bar_chart(28,1)
 plot.bar.chart.30 = plot_bar_chart(30,1)
 ```
 
@@ -235,14 +234,11 @@ plot_last_5_years = function(threshold_chosen,legend_chosen=0){
 
 }
 
-plot.count.end.year.legend = cowplot::get_legend(plot_last_5_years(26,1))
-
 plot.count.last.5.years.26 = plot_last_5_years(26,1)
-plot.count.last.5.years.28 = plot_last_5_years(28,1)
 plot.count.last.5.years.30 = plot_last_5_years(30,1)
 ```
 
-## 26°C: Plot
+## Supp.Figure 3: 26°C Plot
 ```{r}
 pdf(paste0(wbgtmax.folder,'S_Figure_3.pdf'),paper='a4r',width=0,height=0)
 plot_grid(plot.bar.chart.26, plot.count.last.5.years.26, 
@@ -258,7 +254,7 @@ plot_grid(plot.bar.chart.26, plot.count.last.5.years.26,
 ```
 
 
-## 30°C: Plot
+## Supp.Figure 4: 30°C Plot
 ```{r}
 pdf(paste0(wbgtmax.folder,'S_Figure_4.pdf'),paper='a4r',width=0,height=0)
 plot_grid(plot.bar.chart.30, plot.count.last.5.years.30, 
@@ -271,5 +267,17 @@ plot_grid(plot.bar.chart.30, plot.count.last.5.years.30,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(a)', '(b)'))
+```
+
+```{r}
+head(dat.wbgt.summarised.merged.weighted.prison.5year.average) #figure 3a and 4a
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.5year.average ,paste0(wbgtmax.folder,'S_Figure_3a_4a.csv'))
+
+
+sfig_3b_4b <-  USA.df.merged %>% janitor::clean_names() %>% 
+  dplyr::select(prison_id,name,type,population,annual_change_wbgt_26,total_change_wbgt_26,
+                annual_change_wbgt_30,total_change_wbgt_30) %>% distinct()
+readr::write_csv(sfig_3b_4b ,paste0(wbgtmax.folder,'S_Figure_3b_4b.csv'))
+
 ```
 

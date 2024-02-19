@@ -175,3 +175,10 @@ pdf(paste0(wbgtmax.folder,'S_Figure_1.pdf'),paper='a4r',width=0,height=0)
 plot.bar.chart.28
 dev.off()
 ```
+
+```{r}
+head(dat.wbgt.summarised.merged.weighted.prison.5year.average)
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.5year.average,
+                 paste0(wbgtmax.folder,'S_Figure_1.csv'))
+```
+

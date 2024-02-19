@@ -87,6 +87,8 @@ shapefile.data = shapefile.data %>%
                                Type=='FEDERAL' ~ 'Federal',
                                Type=='STATE' ~ 'State',
                                TRUE ~ 'Other'))
+
+n_distinct(shapefile.data$FACILITYID)
 ```
 
 ## Join facility and temperature data
@@ -113,7 +115,8 @@ prison_pop_state <- prison_temp_data %>% #split this up into two because group_b
 ```{r}
 fig1a_data <- read_csv(paste0(wbgtmax.folder, 'Figure_1a.csv'))
 
-num_person_days <- fig1a_data %>% filter(Type == "Total") %>% 
+num_person_days <- fig1a_data %>% 
+  filter(Type == "Total") %>% 
   mutate(num_person_days = sum(wbgt_28_pop_mean)) 
 
 num_person_days %>% dplyr::select(num_person_days) %>% distinct()
@@ -173,13 +176,18 @@ num_person_days %>%
          sum_perc_person_days = sum(perc_person_days))
 ```
 
-## Identify facility with largest number of dangerous humid-hot days
+## Identify facilities with ≥75 hot-humid days, including facility with largest number of h-h days
 ```{r}
 total_days <- prison_temp_data %>% 
   filter(year %in% c(2016,2017,2018,2019,2020)) %>% 
   group_by(fid, name, state, city) %>% 
   dplyr::summarize(total_hot_days = sum(wbgt_28), mean_hot_days = mean(wbgt_28)) %>% 
-  filter(mean_hot_days > 74.9999)
+  filter(mean_hot_days > 74.9999) %>% ungroup()
+
+n_distinct(total_days$fid)
+
+total_days %>% dplyr::slice_max(total_hot_days, n = 1)
+
 ```
 
 ## Compare incarcerated to non-incarcerated population exposure for US
@@ -271,3 +279,10 @@ specific_regions <- prison_trend_data %>%
 
 mean(specific_regions$total_change_wbgt_28)
 ```
+```{r}
+prison_diff_data <- read_csv(paste0(wbgtmax.folder,'Figure_2c.csv')) %>% janitor::clean_names() 
+
+prison_diff_data %>% dplyr::slice_max(total_change_disparity_wbgt_28, n = 1)
+
+```
+
