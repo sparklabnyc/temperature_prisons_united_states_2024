@@ -1,5 +1,5 @@
 ---
-title: "b_04_supp_figure_1"
+title: "Supplementary Figure 1"
 output: html_document
 date: "2024-02-14"
 ---
@@ -27,6 +27,7 @@ library(zoo)
 library(purrr)
 library(cowplot)
 library(MetBrewer)
+library(readr)
 ```
 
 ```{r}

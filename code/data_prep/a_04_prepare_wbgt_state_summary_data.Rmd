@@ -20,11 +20,11 @@ dat.wbgt = readRDS(paste0(wbgt.folder,'weighted_area_raster_state_wbgtmax_daily_
 dat_pop= data.frame()
 for(year_selected in years_wbgtmax){
   if(year_selected<1990){
-    filename_in = paste0(new_population_data,
+    filename_in = paste0(population_data,
                          'pre_1990/pop_monthly_10_year_age_groups_', year_selected,'.csv')  
   }
   if(year_selected>=1990){
-    filename_in = paste0(new_population_data,
+    filename_in = paste0(population_data,
                          'vintage_',vintage,'/pop_monthly_10_year_age_groups_', year_selected,'.csv')
   }
   dat_year=readr::read_csv(filename_in)
@@ -52,8 +52,6 @@ dat.wbgt.summarised = dat.wbgt %>%
 ```{r}
 dat.wbgt.summarised = dat.wbgt.summarised %>%
       mutate(fips = case_when(
-        # Alaska FIPS codes to do here when have time
-        fips== 'XXXXX' ~ 'XXXXX',
         fips== '08001' | fips== '08013' | fips== '08059' | fips== '08123' ~ '08014', # 08001, 08013, 08059, 08123 -> 08014
         fips== '12025' ~ '12086', #  12025 -> 12086
         fips== '30031' | fips== '30067'~ '30113', # 30113 -> 30031, 30067

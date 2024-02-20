@@ -1,5 +1,5 @@
 ---
-title: "b_06_supp_figure_3_and_4"
+title: "Supplementary Figures 3 and 4"
 output: html_document
 date: "2024-02-14"
 ---
@@ -29,6 +29,7 @@ library(graticule)
 library(zoo)
 library(purrr)
 library(cowplot)
+library(readr)
 ```
 
 ## Load WBGT regression file
