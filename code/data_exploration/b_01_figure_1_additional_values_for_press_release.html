@@ -417,11 +417,6 @@ us.main = readOGR(dsn=paste0(project.folder,&quot;data/shapefiles/Prison_Boundar
 
 # fortify to prepare for plotting in ggplot
 map = fortify(us.main)</code></pre>
-<pre><code>## Warning: `fortify(&lt;SpatialPolygonsDataFrame&gt;)` was deprecated in ggplot2 3.4.4.
-## ℹ Please migrate to sf.
-## This warning is displayed once every 8 hours.
-## Call `lifecycle::last_lifecycle_warnings()` to see where this warning was
-## generated.</code></pre>
 <pre><code>## Regions defined for each Polygons</code></pre>
 <pre class="r"><code># extract data from shapefile
 us.main@data$id = rownames(us.main@data) 
@@ -440,9 +435,11 @@ USA.df$prison_id = as.integer(as.character(USA.df$FID))</code></pre>
 <h2>Load WBGT over time file</h2>
 <pre class="r"><code>dat.wbgt.summarised = readRDS(paste0(wbgt.folder,&#39;weighted_area_raster_prison_wbgtmax_daily_&#39;,start_year_wbgt,&#39;_&#39;,end_year_wbgt,&#39;_over_time.rds&#39;))</code></pre>
 </div>
+<div id="last-5-years" class="section level1">
+<h1>Last 5 years</h1>
 <div id="only-take-for-last-5-years-and-sum-up-number-of-days" class="section level2">
 <h2>Only take for last 5 years and sum up number of days</h2>
-<pre class="r"><code>dat.wbgt.summarised = dat.wbgt.summarised %&gt;%
+<pre class="r"><code>dat.wbgt.summarised.last.5.years = dat.wbgt.summarised %&gt;%
   dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %&gt;%
   # dplyr::mutate(wbgt_28 = ifelse(wbgt_28&gt;1,1,0)) %&gt;%
   dplyr::group_by(prison_id) %&gt;%
@@ -450,7 +447,7 @@ USA.df$prison_id = as.integer(as.character(USA.df$FID))</code></pre>
 </div>
 <div id="merge-prison-over-time-file-with-shapefile-data" class="section level2">
 <h2>Merge prison over time file with shapefile data</h2>
-<pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shapefile.data, by=c(&#39;prison_id&#39;=&#39;FID&#39;)) %&gt;% 
+<pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised.last.5.years,shapefile.data, by=c(&#39;prison_id&#39;=&#39;FID&#39;)) %&gt;% 
   dplyr::filter(STATUS==&#39;OPEN&#39;) %&gt;% 
   dplyr::filter(POPULATION &gt; 0) </code></pre>
 </div>
@@ -480,11 +477,61 @@ for incarcerated people who experience at least 1 day of WBGT &gt; 28
 during 2016-2020</h2>
 <pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison %&gt;%
   dplyr::filter(prison_id %in% prison.ids) %&gt;%
-  dplyr::summarise(wbgt_28 = median(wbgt_28))</code></pre>
+  dplyr::summarise(wbgt_28 = mean(wbgt_28))</code></pre>
 <pre><code>## # A tibble: 1 × 1
 ##   wbgt_28
 ##     &lt;dbl&gt;
-## 1      42</code></pre>
+## 1    99.5</code></pre>
+</div>
+</div>
+<div id="first-5-years" class="section level1">
+<h1>First 5 years</h1>
+<div id="only-take-for-last-5-years-and-sum-up-number-of-days-1" class="section level2">
+<h2>Only take for last 5 years and sum up number of days</h2>
+<pre class="r"><code>dat.wbgt.summarised.first.5.years = dat.wbgt.summarised %&gt;%
+  dplyr::filter(year%in%years_wbgtmax[c(1:5)]) %&gt;%
+  # dplyr::mutate(wbgt_28 = ifelse(wbgt_28&gt;1,1,0)) %&gt;%
+  dplyr::group_by(prison_id) %&gt;%
+  dplyr::summarise(wbgt_28 = sum(wbgt_28))</code></pre>
+</div>
+<div id="merge-prison-over-time-file-with-shapefile-data-1" class="section level2">
+<h2>Merge prison over time file with shapefile data</h2>
+<pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised.first.5.years,shapefile.data, by=c(&#39;prison_id&#39;=&#39;FID&#39;)) %&gt;% 
+  dplyr::filter(STATUS==&#39;OPEN&#39;) %&gt;% 
+  dplyr::filter(POPULATION &gt; 0) </code></pre>
+</div>
+<div id="number-of-incarcerated-people-who-experience-at-least-1-day-of-wbgt-28-during-1982-1986" class="section level2">
+<h2>Number of incarcerated people who experience at least 1 day of WBGT
+&gt; 28 during 1982-1986</h2>
+<pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison %&gt;%
+  dplyr::filter(wbgt_28 &gt;= 1) %&gt;%
+  dplyr::summarise(population = sum(POPULATION))</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   population
+##        &lt;int&gt;
+## 1    1745808</code></pre>
+</div>
+<div id="which-carceral-facilities-experienced-at-least-1-day-of-wbgt-28-during-1982-1986" class="section level2">
+<h2>Which carceral facilities experienced at least 1 day of WBGT &gt; 28
+during 1982-1986?</h2>
+<pre class="r"><code>prison.ids = dat.wbgt.summarised.merged.weighted.prison %&gt;%
+  dplyr::filter(wbgt_28 &gt;= 1) %&gt;%
+  pull(prison_id) %&gt;%
+  unique() %&gt;%
+  sort()</code></pre>
+</div>
+<div id="average-number-of-days-wbgt-28-in-each-year-during-1982-1986-for-incarcerated-people-who-experience-at-least-1-day-of-wbgt-28-during-1982-1986" class="section level2">
+<h2>Average number of days WBGT &gt; 28 in each year during 1982-1986
+for incarcerated people who experience at least 1 day of WBGT &gt; 28
+during 1982-1986</h2>
+<pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison %&gt;%
+  dplyr::filter(prison_id %in% prison.ids) %&gt;%
+  dplyr::summarise(wbgt_28 = mean(wbgt_28))</code></pre>
+<pre><code>## # A tibble: 1 × 1
+##   wbgt_28
+##     &lt;dbl&gt;
+## 1    76.7</code></pre>
+</div>
 </div>
 
 

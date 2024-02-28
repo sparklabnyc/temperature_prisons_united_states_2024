@@ -536,7 +536,7 @@ plot.state.year.diff.30.sorted = plot_state_year_difference_sorted(30,1)
 ```
 
 
-## 28°C: Place arrangement of plots
+## 28°C: Place arrangement of plots (heatmap arranged by average disparity)
 ```{r}
 nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
           nrow = 2,
@@ -544,7 +544,7 @@ nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
           label_x = -0.02, label_y = 1,
           labels = c('(b)', '(c)'))
 
-plot.28 = plot_grid(plot.state.year.diff.28, nested.28,
+plot.28 = plot_grid(plot.state.year.diff.28.sorted, nested.28,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(a)'))
@@ -557,7 +557,7 @@ plot.28
 ```
 
 
-## 28°C: Place arrangement of plots (heatmap arranged by average disparity)
+## 28°C: Place arrangement of plots (heatmap alphabetized)
 ```{r}
 nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
           nrow = 2,
@@ -565,16 +565,16 @@ nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
           label_x = -0.02, label_y = 1,
           labels = c('(b)', '(c)'))
 
-plot.28.sorted = plot_grid(plot.state.year.diff.28.sorted, nested.28,
+plot.28.alpha.sorted = plot_grid(plot.state.year.diff.28, nested.28,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(a)'))
 
-pdf(paste0(wbgtmax.folder,'Figure_2_28_sorted.pdf'),paper='a4r',width=0,height=0)
-plot.28.sorted
+pdf(paste0(wbgtmax.folder,'Figure_2_28_alpha_sorted.pdf'),paper='a4r',width=0,height=0)
+plot.28.alpha.sorted
 dev.off()
 
-plot.28.sorted
+plot.28.alpha.sorted
 ```
 
 ## Save output data for Figure 2a
@@ -583,7 +583,7 @@ dat.wbgt.summarised.merged.weighted.prison.state.output = dat.wbgt.summarised.me
   dplyr::select(state,year,wbgt_28_diff) %>%
   dplyr::mutate(wbgt_28_diff=round(wbgt_28_diff,1))
 
-readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state.output ,paste0(wbgtmax.folder,'Figure_2a.csv'))
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state.output,paste0(wbgtmax.folder,'Figure_2a.csv'))
 ```
 
 ## Save output data for Figure 2b
@@ -595,7 +595,7 @@ dat.wbgt.summarised.regression.output = dat.wbgt.summarised.regression %>%
   filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
   dplyr::select(prison_id,total_change_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
 
-readr::write_csv(dat.wbgt.summarised.regression.output ,paste0(wbgtmax.folder,'Figure_2b.csv'))
+readr::write_csv(dat.wbgt.summarised.regression.output,paste0(wbgtmax.folder,'Figure_2b.csv'))
 ```
 
 ## Save output data for Figure 2c
@@ -607,5 +607,5 @@ dat.wbgt.summarised.regression.disparity.output = dat.wbgt.summarised.regression
   filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
   dplyr::select(prison_id,total_change_disparity_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
 
-readr::write_csv(dat.wbgt.summarised.regression.disparity.output ,paste0(wbgtmax.folder,'Figure_2c.csv'))
+readr::write_csv(dat.wbgt.summarised.regression.disparity.output,paste0(wbgtmax.folder,'Figure_2c.csv'))
 ```
