@@ -85,9 +85,11 @@ USA.df$prison_id = as.integer(as.character(USA.df$FID))
 dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
 ```
 
+# Last 5 years
+
 ## Only take for last 5 years and sum up number of days
 ```{r}
-dat.wbgt.summarised = dat.wbgt.summarised %>%
+dat.wbgt.summarised.last.5.years = dat.wbgt.summarised %>%
   dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %>%
   # dplyr::mutate(wbgt_28 = ifelse(wbgt_28>1,1,0)) %>%
   dplyr::group_by(prison_id) %>%
@@ -96,7 +98,7 @@ dat.wbgt.summarised = dat.wbgt.summarised %>%
 
 ## Merge prison over time file with shapefile data 
 ```{r}
-dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
+dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised.last.5.years,shapefile.data, by=c('prison_id'='FID')) %>% 
   dplyr::filter(STATUS=='OPEN') %>% 
   dplyr::filter(POPULATION > 0) 
 ```
@@ -121,5 +123,46 @@ prison.ids = dat.wbgt.summarised.merged.weighted.prison %>%
 ```{r}
 dat.wbgt.summarised.merged.weighted.prison %>%
   dplyr::filter(prison_id %in% prison.ids) %>%
-  dplyr::summarise(wbgt_28 = median(wbgt_28))
+  dplyr::summarise(wbgt_28 = mean(wbgt_28))
+```
+
+# First 5 years
+
+## Only take for last 5 years and sum up number of days
+```{r}
+dat.wbgt.summarised.first.5.years = dat.wbgt.summarised %>%
+  dplyr::filter(year%in%years_wbgtmax[c(1:5)]) %>%
+  # dplyr::mutate(wbgt_28 = ifelse(wbgt_28>1,1,0)) %>%
+  dplyr::group_by(prison_id) %>%
+  dplyr::summarise(wbgt_28 = sum(wbgt_28))
+```
+
+## Merge prison over time file with shapefile data 
+```{r}
+dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised.first.5.years,shapefile.data, by=c('prison_id'='FID')) %>% 
+  dplyr::filter(STATUS=='OPEN') %>% 
+  dplyr::filter(POPULATION > 0) 
+```
+
+## Number of incarcerated people who experience at least 1 day of WBGT > 28 during 1982-1986
+```{r}
+dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(wbgt_28 >= 1) %>%
+  dplyr::summarise(population = sum(POPULATION))
+```
+
+## Which carceral facilities experienced at least 1 day of WBGT > 28 during 1982-1986?
+```{r}
+prison.ids = dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(wbgt_28 >= 1) %>%
+  pull(prison_id) %>%
+  unique() %>%
+  sort()
+```
+
+## Average number of days WBGT > 28 in each year during 1982-1986 for incarcerated people who experience at least 1 day of WBGT > 28 during 1982-1986
+```{r}
+dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(prison_id %in% prison.ids) %>%
+  dplyr::summarise(wbgt_28 = mean(wbgt_28))
 ```
