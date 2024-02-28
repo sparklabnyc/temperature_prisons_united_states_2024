@@ -488,11 +488,13 @@ plot_state_year_difference_sorted = function(threshold_chosen,legend_chosen=0){
   
   dat.wbgt.summarised.merged.weighted.prison.state.sorted = dat.wbgt.summarised.merged.weighted.prison.state %>%
     group_by(STATE) %>%
-    dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')))) %>%
+    dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')),na.rm = TRUE)) %>%
     dplyr::arrange((mean)) %>%
     ungroup() %>%
     dplyr::mutate(STATE.sorted = forcats::fct_inorder(STATE, ordered=TRUE))
-    # dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
+    #dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
+  
+
   
   p = ggplot() +
     geom_tile(data=dat.wbgt.summarised.merged.weighted.prison.state.sorted,
@@ -522,7 +524,7 @@ plot_state_year_difference_sorted = function(threshold_chosen,legend_chosen=0){
     p = p + 
       guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
                                  barheight = 1,title.vjust = 0.8,
-                                 title = "Population-weighted difference in annual number of\n hot-humid days between carceral facilities and rest of state"),legend.text=element_text(size=15))
+                                 title = "Population-weighted difference in annual\nnumber of hot-humid days between carceral\nfacilities and rest of state"),legend.text=element_text(size=15))
   }
   
   return(p)
@@ -609,3 +611,19 @@ dat.wbgt.summarised.regression.disparity.output = dat.wbgt.summarised.regression
 
 readr::write_csv(dat.wbgt.summarised.regression.disparity.output,paste0(wbgtmax.folder,'Figure_2c.csv'))
 ```
+
+## Composite figure for research brief 
+```{r}
+plot.state.year.diff.28.sorted #rb figure 1b
+plot.bar.chart.28 #rb figure 1a
+
+rb_figure = plot_grid(plot.bar.chart.28, plot.state.year.diff.28.sorted,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)','(b)'))
+
+pdf(paste0(wbgtmax.folder,'research_brief_figure.pdf'),paper='a4r',width=-2,height=0)
+rb_figure
+dev.off()
+```
+
