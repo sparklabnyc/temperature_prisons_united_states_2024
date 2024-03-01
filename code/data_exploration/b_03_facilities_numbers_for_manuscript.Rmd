@@ -269,7 +269,7 @@ prison_trend_data <- read_csv(paste0(wbgtmax.folder,'Figure_2b.csv')) %>% janito
 
 prison_trend_data %>% filter(total_change_wbgt_28 > 0) %>% tally(population)
 prison_trend_data %>% filter(total_change_wbgt_28 > 0) %>% tally(pert_total_incar)
-prison_trend_data %>% filter(total_change_wbgt_28 > 0) %>% count()
+prison_trend_data %>% filter(total_change_wbgt_28 > 0) %>% nrow()
 ```
 
 ## Number of people in FL facilites with trends in hot-humid days
