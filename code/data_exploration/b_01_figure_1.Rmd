@@ -126,6 +126,33 @@ dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.m
   dplyr::mutate(Type=factor(Type,levels=c('Federal','State','County','Local','Other')))
 ```
 
+## Take 5-year average of earliest 5 years
+```{r}
+dat.wbgt.summarised.merged.weighted.prison.first.5year.average = dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(year%in%years_wbgtmax[c(1:5)]) %>%
+  dplyr::group_by(STATE,STATEFP,TYPE) %>%
+  dplyr::summarise(wbgt_26_mean = mean(wbgt_26),
+                   wbgt_28_mean = mean(wbgt_28),
+                   wbgt_30_mean = mean(wbgt_30),
+                   wbgt_35_mean = mean(wbgt_35),
+                   wbgt_26_pop_mean = mean(wbgt_26_pop),
+                   wbgt_28_pop_mean = mean(wbgt_28_pop),
+                   wbgt_30_pop_mean = mean(wbgt_30_pop),
+                   wbgt_35_pop_mean = mean(wbgt_35_pop)) %>%
+  dplyr::rename(Type=TYPE) %>%
+  dplyr::mutate(Type=case_when(Type=='COUNTY' ~ 'County',
+                               Type=='LOCAL' ~ 'Local',
+                               Type=='FEDERAL' ~ 'Federal',
+                               Type=='STATE' ~ 'State',
+                               TRUE ~ 'Other')) %>%
+  dplyr::mutate(Type=as.factor(Type)) %>%
+  dplyr::mutate(Type=factor(Type,levels=c('Federal','State','County','Local','Other')))
+
+# total number of person-days in first 5 years
+print(sum(dat.wbgt.summarised.merged.weighted.prison.first.5year.average$wbgt_28_pop_mean))
+```
+
+
 ## Plot barchart by state stacked by prison type
 ```{r}
 library(MetBrewer)
