@@ -483,6 +483,33 @@ state and year weighted by prison population</h2>
 <pre><code>## `summarise()` has grouped output by &#39;STATE&#39;, &#39;STATEFP&#39;. You can override using
 ## the `.groups` argument.</code></pre>
 </div>
+<div id="take-5-year-average-of-earliest-5-years" class="section level2">
+<h2>Take 5-year average of earliest 5 years</h2>
+<pre class="r"><code>dat.wbgt.summarised.merged.weighted.prison.first.5year.average = dat.wbgt.summarised.merged.weighted.prison %&gt;%
+  dplyr::filter(year%in%years_wbgtmax[c(1:5)]) %&gt;%
+  dplyr::group_by(STATE,STATEFP,TYPE) %&gt;%
+  dplyr::summarise(wbgt_26_mean = mean(wbgt_26),
+                   wbgt_28_mean = mean(wbgt_28),
+                   wbgt_30_mean = mean(wbgt_30),
+                   wbgt_35_mean = mean(wbgt_35),
+                   wbgt_26_pop_mean = mean(wbgt_26_pop),
+                   wbgt_28_pop_mean = mean(wbgt_28_pop),
+                   wbgt_30_pop_mean = mean(wbgt_30_pop),
+                   wbgt_35_pop_mean = mean(wbgt_35_pop)) %&gt;%
+  dplyr::rename(Type=TYPE) %&gt;%
+  dplyr::mutate(Type=case_when(Type==&#39;COUNTY&#39; ~ &#39;County&#39;,
+                               Type==&#39;LOCAL&#39; ~ &#39;Local&#39;,
+                               Type==&#39;FEDERAL&#39; ~ &#39;Federal&#39;,
+                               Type==&#39;STATE&#39; ~ &#39;State&#39;,
+                               TRUE ~ &#39;Other&#39;)) %&gt;%
+  dplyr::mutate(Type=as.factor(Type)) %&gt;%
+  dplyr::mutate(Type=factor(Type,levels=c(&#39;Federal&#39;,&#39;State&#39;,&#39;County&#39;,&#39;Local&#39;,&#39;Other&#39;)))</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;STATE&#39;, &#39;STATEFP&#39;. You can override using
+## the `.groups` argument.</code></pre>
+<pre class="r"><code># total number of person-days in first 5 years
+print(sum(dat.wbgt.summarised.merged.weighted.prison.first.5year.average$wbgt_28_pop_mean))</code></pre>
+<pre><code>## [1] 31258401</code></pre>
+</div>
 <div id="plot-barchart-by-state-stacked-by-prison-type" class="section level2">
 <h2>Plot barchart by state stacked by prison type</h2>
 <pre class="r"><code>library(MetBrewer)
