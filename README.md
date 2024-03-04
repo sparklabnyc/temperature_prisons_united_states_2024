@@ -1,8 +1,14 @@
 # Hazardous heat exposure among incarcerated people in the United States
 
-Cascade Tuholske, Victoria D. Lynch, Raenita Spriggs, Yoonjung Ahn, Colin Raymond, Anne E. Nigra, Robbie M. Parks
+Cascade Tuholske, Victoria D. Lynch, Raenita Spriggs, Yoonjung Ahn, Colin Raymond, Anne E. Nigra, Robbie M. Parks\
+Nature Sustainability 2024.
 
-## Introduction
+
+## Project description
+
+This code is used for the paper 
+
+Tuholske C, Lynch VD, Spriggs R, Ahn Y, Raymond C, Nigra AE, Parks RM (2024). [Hazardous heat exposure among incarcerated people in the United States](https://doi.org/10.1038/s41893-024-01293-y). _Nature Sustainability_.
 
 ## Code
 
@@ -34,9 +40,8 @@ b_06_supp_figure_3_and_4 - Plot Supp.Figure 3 (26°C) and Supp.Figure 4 (30°C)
 
 b_07_supp_figure_5_and_6 - Plot Supp.Figure 5 (26°C) and Supp.Figure 6 (30°C)
 
-## Other stuff
+## Data Availability
 
-note: please run create_folder_structure.R first to create folders which may not be there when first loaded.
-
-note: to run an R Markdown file from command line, run\
-Rscript -e "rmarkdown::render('SCRIPT_NAME.Rmd')"
+Data used for this analysis are available via https://github.com/sparklabnyc/temperature_prisons_united_states_2024. The data used in this study were created from the following datasets. 
+- Daily 4-km PRISM data during 1982–2020 and HIFLD data are freely available at https://prism.oregonstate.edu/recent/ and https://hifld-geoplatform.opendata.arcgis.com, respectively.
+- National Center for Health Statistics bridged-race dataset (Vintage 2020) is available during 1990–2020 (https://www.cdc.gov/nchs/nvss/bridged_race.htm) and from the US Census Bureau before 1990 (https://www.census.gov/data/tables/time-series/demo/popest/1980s-county.html). Source data are provided with this paper.
