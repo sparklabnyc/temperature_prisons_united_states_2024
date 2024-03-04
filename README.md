@@ -6,7 +6,7 @@ Nature Sustainability 2024.
 
 ## Project description
 
-This code is used for the paper 
+This dataset and code is used for the paper 
 
 Tuholske C, Lynch VD, Spriggs R, Ahn Y, Raymond C, Nigra AE, Parks RM (2024). [Hazardous heat exposure among incarcerated people in the United States](https://doi.org/10.1038/s41893-024-01293-y). _Nature Sustainability_.
 
