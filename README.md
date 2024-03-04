@@ -42,6 +42,8 @@ b_07_supp_figure_5_and_6 - Plot Supp.Figure 5 (26°C) and Supp.Figure 6 (30°C)
 
 ## Data Availability
 
-Data used for this analysis are available via https://github.com/sparklabnyc/temperature_prisons_united_states_2024. The data used in this study were created from the following datasets. 
+Data used for this analysis are available via https://github.com/sparklabnyc/temperature_prisons_united_states_2024. 
+
+The data used in this study were created from the following datasets. 
 - Daily 4-km PRISM data during 1982–2020 and HIFLD data are freely available at https://prism.oregonstate.edu/recent/ and https://hifld-geoplatform.opendata.arcgis.com, respectively.
 - National Center for Health Statistics bridged-race dataset (Vintage 2020) is available during 1990–2020 (https://www.cdc.gov/nchs/nvss/bridged_race.htm) and from the US Census Bureau before 1990 (https://www.census.gov/data/tables/time-series/demo/popest/1980s-county.html). Source data are provided with this paper.
