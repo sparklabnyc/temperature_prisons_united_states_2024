@@ -488,11 +488,13 @@ plot_state_year_difference_sorted = function(threshold_chosen,legend_chosen=0){
   
   dat.wbgt.summarised.merged.weighted.prison.state.sorted = dat.wbgt.summarised.merged.weighted.prison.state %>%
     group_by(STATE) %>%
-    dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')))) %>%
+    dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')),na.rm = TRUE)) %>%
     dplyr::arrange((mean)) %>%
     ungroup() %>%
     dplyr::mutate(STATE.sorted = forcats::fct_inorder(STATE, ordered=TRUE))
-    # dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
+    #dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
+  
+
   
   p = ggplot() +
     geom_tile(data=dat.wbgt.summarised.merged.weighted.prison.state.sorted,
@@ -522,7 +524,7 @@ plot_state_year_difference_sorted = function(threshold_chosen,legend_chosen=0){
     p = p + 
       guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
                                  barheight = 1,title.vjust = 0.8,
-                                 title = "Population-weighted difference in annual number of\n hot-humid days between carceral facilities and rest of state"),legend.text=element_text(size=15))
+                                 title = "Population-weighted difference in annual\nnumber of hot-humid days between carceral\nfacilities and rest of state"),legend.text=element_text(size=15))
   }
   
   return(p)
@@ -535,85 +537,6 @@ plot.state.year.diff.28.sorted = plot_state_year_difference_sorted(28,1)
 plot.state.year.diff.30.sorted = plot_state_year_difference_sorted(30,1)
 ```
 
-## 26°C: Place arrangement of plots
-```{r}
-nested.26 = plot_grid(plot.total.change.26, plot.total.disparity.change.26,
-          nrow = 2,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(b)', '(c)'))
-
-plot.26 = plot_grid(plot.state.year.diff.26, nested.26,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)'))
-
-pdf(paste0(wbgtmax.folder,'Figure_2_26.pdf'),paper='a4r',width=0,height=0)
-plot.26
-dev.off()
-
-plot.26
-```
-
-## 28°C: Place arrangement of plots
-```{r}
-nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
-          nrow = 2,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(b)', '(c)'))
-
-plot.28 = plot_grid(plot.state.year.diff.28, nested.28,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)'))
-
-pdf(paste0(wbgtmax.folder,'Figure_2_28.pdf'),paper='a4r',width=0,height=0)
-plot.28
-dev.off()
-
-plot.28
-```
-
-## 30°C: Place arrangement of plots
-```{r}
-nested.30 = plot_grid(plot.total.change.30, plot.total.disparity.change.30,
-          nrow = 2,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(b)', '(c)'))
-
-plot.30 = plot_grid(plot.state.year.diff.30, nested.30,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)'))
-
-pdf(paste0(wbgtmax.folder,'Figure_2_30.pdf'),paper='a4r',width=0,height=0)
-plot.30
-dev.off()
-
-plot.30
-```
-
-## 26°C: Place arrangement of plots (heatmap arranged by average disparity)
-```{r}
-nested.26 = plot_grid(plot.total.change.26, plot.total.disparity.change.26,
-          nrow = 2,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(b)', '(c)'))
-
-plot.26.sorted = plot_grid(plot.state.year.diff.26.sorted, nested.26,
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)'))
-
-pdf(paste0(wbgtmax.folder,'Figure_2_26_sorted.pdf'),paper='a4r',width=0,height=0)
-plot.26.sorted
-dev.off()
-
-plot.26.sorted
-```
 
 ## 28°C: Place arrangement of plots (heatmap arranged by average disparity)
 ```{r}
@@ -623,36 +546,37 @@ nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
           label_x = -0.02, label_y = 1,
           labels = c('(b)', '(c)'))
 
-plot.28.sorted = plot_grid(plot.state.year.diff.28.sorted, nested.28,
+plot.28 = plot_grid(plot.state.year.diff.28.sorted, nested.28,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(a)'))
 
-pdf(paste0(wbgtmax.folder,'Figure_2_28_sorted.pdf'),paper='a4r',width=0,height=0)
-plot.28.sorted
+pdf(paste0(wbgtmax.folder,'Figure_2.pdf'),paper='a4r',width=0,height=0)
+plot.28
 dev.off()
 
-plot.28.sorted
+plot.28
 ```
 
-## 30°C: Place arrangement of plots (heatmap arranged by average disparity)
+
+## 28°C: Place arrangement of plots (heatmap alphabetized)
 ```{r}
-nested.30 = plot_grid(plot.total.change.30, plot.total.disparity.change.30,
+nested.28 = plot_grid(plot.total.change.28, plot.total.disparity.change.28,
           nrow = 2,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(b)', '(c)'))
 
-plot.30.sorted = plot_grid(plot.state.year.diff.30.sorted, nested.30,
+plot.28.alpha.sorted = plot_grid(plot.state.year.diff.28, nested.28,
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
           labels = c('(a)'))
 
-pdf(paste0(wbgtmax.folder,'Figure_2_30_sorted.pdf'),paper='a4r',width=0,height=0)
-plot.30.sorted
+pdf(paste0(wbgtmax.folder,'Figure_2_28_alpha_sorted.pdf'),paper='a4r',width=0,height=0)
+plot.28.alpha.sorted
 dev.off()
 
-plot.30.sorted
+plot.28.alpha.sorted
 ```
 
 ## Save output data for Figure 2a
@@ -661,7 +585,7 @@ dat.wbgt.summarised.merged.weighted.prison.state.output = dat.wbgt.summarised.me
   dplyr::select(state,year,wbgt_28_diff) %>%
   dplyr::mutate(wbgt_28_diff=round(wbgt_28_diff,1))
 
-readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state.output ,paste0(wbgtmax.folder,'Figure_2a.csv'))
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.state.output,paste0(wbgtmax.folder,'Figure_2a.csv'))
 ```
 
 ## Save output data for Figure 2b
@@ -673,7 +597,7 @@ dat.wbgt.summarised.regression.output = dat.wbgt.summarised.regression %>%
   filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
   dplyr::select(prison_id,total_change_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
 
-readr::write_csv(dat.wbgt.summarised.regression.output ,paste0(wbgtmax.folder,'Figure_2b.csv'))
+readr::write_csv(dat.wbgt.summarised.regression.output,paste0(wbgtmax.folder,'Figure_2b.csv'))
 ```
 
 ## Save output data for Figure 2c
@@ -685,5 +609,21 @@ dat.wbgt.summarised.regression.disparity.output = dat.wbgt.summarised.regression
   filter(STATUS=='OPEN') %>% filter(POPULATION > 0) %>%
   dplyr::select(prison_id,total_change_disparity_wbgt_28,NAME,STATE,STATEFP,COUNTY,CITY,TYPE,POPULATION,CAPACITY,VAL_DATE)
 
-readr::write_csv(dat.wbgt.summarised.regression.disparity.output ,paste0(wbgtmax.folder,'Figure_2c.csv'))
+readr::write_csv(dat.wbgt.summarised.regression.disparity.output,paste0(wbgtmax.folder,'Figure_2c.csv'))
 ```
+
+## Composite figure for research brief 
+```{r}
+plot.state.year.diff.28.sorted #rb figure 1b
+plot.bar.chart.28 #rb figure 1a
+
+rb_figure = plot_grid(plot.bar.chart.28, plot.state.year.diff.28.sorted,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)','(b)'))
+
+pdf(paste0(wbgtmax.folder,'research_brief_figure.pdf'),paper='a4r',width=-2,height=0)
+rb_figure
+dev.off()
+```
+

@@ -365,18 +365,18 @@ display: none;
 <pre class="r"><code>dat_pop= data.frame()
 for(year_selected in years_wbgtmax){
   if(year_selected&lt;1990){
-    filename_in = paste0(new_population_data,
+    filename_in = paste0(population_data,
                          &#39;pre_1990/pop_monthly_10_year_age_groups_&#39;, year_selected,&#39;.csv&#39;)  
   }
   if(year_selected&gt;=1990){
-    filename_in = paste0(new_population_data,
+    filename_in = paste0(population_data,
                          &#39;vintage_&#39;,vintage,&#39;/pop_monthly_10_year_age_groups_&#39;, year_selected,&#39;.csv&#39;)
   }
   dat_year=readr::read_csv(filename_in)
   dat_pop = data.table::rbindlist(list(dat_pop,dat_year))
   rm(dat_year)
 }</code></pre>
-<pre><code>## Rows: 754560 Columns: 6
+<pre><code>## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -384,7 +384,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -392,7 +392,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -400,7 +400,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -408,7 +408,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -416,7 +416,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -424,7 +424,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -432,7 +432,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -440,7 +440,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -448,7 +448,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -456,7 +456,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -464,7 +464,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -472,7 +472,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -480,7 +480,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -488,7 +488,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -496,7 +496,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -504,7 +504,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -512,7 +512,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -520,7 +520,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -528,7 +528,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -536,7 +536,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -544,7 +544,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -552,7 +552,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -560,7 +560,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -568,7 +568,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -576,7 +576,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -584,7 +584,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -592,7 +592,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -600,7 +600,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -608,7 +608,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 756720 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips
@@ -616,7 +616,7 @@ for(year_selected in years_wbgtmax){
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
-## Rows: 754560 Columns: 6
+## Rows: 748361 Columns: 6
 ## ── Column specification ────────────────────────────────────────────────────────
 ## Delimiter: &quot;,&quot;
 ## chr (1): fips

@@ -1,0 +1,284 @@
+---
+title: "Supplementary Figures 3 and 4"
+output: html_document
+date: "2024-02-14"
+---
+
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load specific plotting packages
+```{r, message=FALSE}
+# load required packages
+library(data.table)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(raster)
+library(sp)
+library(plyr)
+library(graticule)
+library(zoo)
+library(purrr)
+library(cowplot)
+library(readr)
+```
+
+## Load WBGT regression file
+```{r}
+dat.wbgt.summarised.regression = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```
+
+## Prepare map structure
+```{r}
+# for map theme to plot in ggplot
+theme_map = function(base_size=10, base_family=""){
+    require(grid)
+    theme_bw(base_size=base_size,base_family=base_family) %+replace%
+    theme(axis.line=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    axis.title=element_blank(),
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid=element_blank(),
+    panel.margin=unit(0,"lines"),
+    plot.background=element_blank(),
+    legend.position = 'bottom'
+    )
+}
+```
+
+## Load US prison shapefile to load details and mapping
+```{r}
+# load shapefile of entire United States by prison
+us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
+                           layer="Prison_Boundaries_Edited")
+
+us.main = spTransform(us.main, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+# fortify to prepare for plotting in ggplot
+map = fortify(us.main)
+
+# extract data from shapefile
+us.main@data$id = rownames(us.main@data) 
+shapefile.data = us.main@data
+
+# fix the weird Alabama mistake
+shapefile.data = shapefile.data %>%
+  dplyr::mutate(STATEFP=case_when(STATEFP=='10' & STATE=='AL'~ '01',
+                               TRUE ~ STATEFP))
+
+# merge selected data to map_create dataframe for colouring of ggplot
+USA.df = merge(map, shapefile.data, by='id')
+USA.df$prison_id = as.integer(as.character(USA.df$FID))
+```
+
+## Load WBGT over time file
+```{r}
+dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+```
+
+## Merge prison over time file with shapefile data then summarise by state and year weighted by prison population
+```{r}
+dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
+  dplyr::filter(STATUS=='OPEN') %>% 
+  dplyr::filter(POPULATION > 0) %>%
+  dplyr::group_by(STATE,STATEFP,TYPE,year) %>%
+  dplyr::summarise(wbgt_26 = weighted.mean(wbgt_26,POPULATION),
+            wbgt_28 = weighted.mean(wbgt_28,POPULATION),
+            wbgt_30 = weighted.mean(wbgt_30,POPULATION),
+            wbgt_35 = weighted.mean(wbgt_35,POPULATION),
+            POPULATION = sum(POPULATION)) %>%
+  dplyr::mutate(STATE=factor(STATE, levels=rev(sort(unique(STATE))))) %>%
+  dplyr::mutate(wbgt_26_pop = wbgt_26 * POPULATION,
+                wbgt_28_pop = wbgt_28 * POPULATION,
+                wbgt_30_pop = wbgt_30 * POPULATION,
+                wbgt_35_pop = wbgt_35 * POPULATION)
+```
+
+## Take 5-year average of most recent 5 years
+```{r}
+dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %>%
+  dplyr::group_by(STATE,STATEFP,TYPE) %>%
+  dplyr::summarise(wbgt_26_mean = mean(wbgt_26),
+                   wbgt_28_mean = mean(wbgt_28),
+                   wbgt_30_mean = mean(wbgt_30),
+                   wbgt_35_mean = mean(wbgt_35),
+                   wbgt_26_pop_mean = mean(wbgt_26_pop),
+                   wbgt_28_pop_mean = mean(wbgt_28_pop),
+                   wbgt_30_pop_mean = mean(wbgt_30_pop),
+                   wbgt_35_pop_mean = mean(wbgt_35_pop)) %>%
+  dplyr::rename(Type=TYPE) %>%
+  dplyr::mutate(Type=case_when(Type=='COUNTY' ~ 'County',
+                               Type=='LOCAL' ~ 'Local',
+                               Type=='FEDERAL' ~ 'Federal',
+                               Type=='STATE' ~ 'State',
+                               TRUE ~ 'Other')) %>%
+  dplyr::mutate(Type=as.factor(Type)) %>%
+  dplyr::mutate(Type=factor(Type,levels=c('Federal','State','County','Local','Other')))
+```
+
+## Plot barchart by state stacked by prison type
+```{r}
+library(MetBrewer)
+
+plot_bar_chart = function(threshold_chosen,legend_chosen=1){ 
+  
+  # calculate rank of bars
+  dat.rank = dat.wbgt.summarised.merged.weighted.prison.5year.average %>%
+    group_by(STATE) %>%
+    dplyr::summarise(sum=sum(get(paste0('wbgt_',threshold_chosen,'_pop_mean')))) %>%
+    dplyr::arrange(sum) %>%
+    dplyr::mutate(rank=row_number())
+  
+  dat.plot = left_join(dat.wbgt.summarised.merged.weighted.prison.5year.average,dat.rank)
+
+ p = ggplot() + 
+   geom_bar(data=dat.plot, 
+                aes(x=reorder(STATE, rank),
+                              y=get(paste0('wbgt_',threshold_chosen,'_pop_mean')),fill=Type),stat = "identity") +
+   ylab(paste0('Mean annual number of dangerous hot-humid person-days\nfor incarcerated people during ',(end_year_wbgt-4),'-',end_year_wbgt)) + 
+   xlab('State') + 
+   scale_y_continuous(label=scales::comma) + 
+   coord_flip() +
+   scale_fill_manual(values=met.brewer('Lakota')) + 
+   theme_bw() + theme(text = element_text(size = 10), 
+   panel.grid.major = element_blank(),axis.text.x = element_text(angle=0 , size=8, vjust=0.5), 
+   plot.title = element_text(hjust = 0.5),panel.background = element_blank(), 
+   panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"), 
+   panel.border = element_rect(colour = "black"),strip.background = element_blank(), 
+   legend.position = 'bottom',legend.justification='center', 
+   legend.background = element_rect(fill="white", size=.5, linetype="dotted")) 
+
+ return(p) 
+}
+
+plot.bar.chart.26 = plot_bar_chart(26,1)
+plot.bar.chart.30 = plot_bar_chart(30,1)
+```
+
+## Load US state shapefile for mapping
+```{r}
+us = readOGR(dsn=paste0(data.folder,"shapefiles/states"),layer="states")
+
+# reproject shapefile
+us_aea = spTransform(us, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+us_aea = us
+us_aea@data$id = rownames(us_aea@data)
+
+# only keep mainland US States
+us_aea = us_aea[us_aea$STATE_FIPS %in% states_included,]
+us_aea = spTransform(us_aea, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+us_aea = fortify(us_aea)
+```
+
+## Prepare summary maps
+```{r}
+# merge map with mean values
+USA.df.merged = left_join(USA.df,dat.wbgt.summarised.regression,by='prison_id')
+USA.df.merged = with(USA.df.merged, USA.df.merged[order(id,order),])
+```
+
+## Prepare colors and legends of maps
+```{r}
+legend_create_count_start_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',start_year_wbgt))
+legend_create_count_end_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',end_year_wbgt))
+legend_create_count_last_5_years = function(threshold)(paste0('Mean annual number of\ndangerous hot-humid days during ',(end_year_wbgt-4),'-',end_year_wbgt))
+legend_create_annual_change = function(threshold)(paste0('Annual change during\n',start_year_wbgt,'-',end_year_wbgt ))
+legend_create_total_change = function(threshold)(paste0('Total change in annual number of dangerous hot-humid days\nduring ',start_year_wbgt,'-',end_year_wbgt))
+```
+
+## Only take open prisons and whose population we know
+```{r}
+USA.df.merged = USA.df.merged %>% 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) 
+```
+
+## Plot count in last 5 years map 
+```{r}
+plot_last_5_years = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,
+                                        color=get(paste0('wbgt_',threshold_chosen,'_',(end_year_wbgt-4),'_',end_year_wbgt))),size=1.2) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Tam')), limits = c(0,max(USA.df.merged$wbgt_28_2016_2020))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+          guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_last_5_years(threshold_chosen)),legend.text=element_text(size=5)) 
+    }  
+
+    return(p)
+
+}
+
+plot.count.last.5.years.26 = plot_last_5_years(26,1)
+plot.count.last.5.years.30 = plot_last_5_years(30,1)
+```
+
+## Supp.Figure 3: 26°C Plot
+```{r}
+pdf(paste0(wbgtmax.folder,'S_Figure_3.pdf'),paper='a4r',width=0,height=0)
+plot_grid(plot.bar.chart.26, plot.count.last.5.years.26, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
+dev.off()
+
+plot_grid(plot.bar.chart.26, plot.count.last.5.years.26, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
+```
+
+
+## Supp.Figure 4: 30°C Plot
+```{r}
+pdf(paste0(wbgtmax.folder,'S_Figure_4.pdf'),paper='a4r',width=0,height=0)
+plot_grid(plot.bar.chart.30, plot.count.last.5.years.30, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
+dev.off()
+
+plot_grid(plot.bar.chart.30, plot.count.last.5.years.30, 
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)', '(b)'))
+```
+
+```{r}
+head(dat.wbgt.summarised.merged.weighted.prison.5year.average) #figure 3a and 4a
+readr::write_csv(dat.wbgt.summarised.merged.weighted.prison.5year.average ,paste0(wbgtmax.folder,'S_Figure_3a_4a.csv'))
+
+
+sfig_3b_4b <-  USA.df.merged %>% janitor::clean_names() %>% 
+  dplyr::select(prison_id,name,type,population,annual_change_wbgt_26,total_change_wbgt_26,
+                annual_change_wbgt_30,total_change_wbgt_30) %>% distinct()
+readr::write_csv(sfig_3b_4b ,paste0(wbgtmax.folder,'S_Figure_3b_4b.csv'))
+
+```
+

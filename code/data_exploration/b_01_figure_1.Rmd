@@ -108,7 +108,11 @@ dat.wbgt.summarised.merged.weighted.prison = left_join(dat.wbgt.summarised,shape
 dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.merged.weighted.prison %>%
   dplyr::filter(year%in%years_wbgtmax[c((length(years_wbgtmax)-4):length(years_wbgtmax))]) %>%
   dplyr::group_by(STATE,STATEFP,TYPE) %>%
-  dplyr::summarise(wbgt_26_pop_mean = mean(wbgt_26_pop),
+  dplyr::summarise(wbgt_26_mean = mean(wbgt_26),
+                   wbgt_28_mean = mean(wbgt_28),
+                   wbgt_30_mean = mean(wbgt_30),
+                   wbgt_35_mean = mean(wbgt_35),
+                   wbgt_26_pop_mean = mean(wbgt_26_pop),
                    wbgt_28_pop_mean = mean(wbgt_28_pop),
                    wbgt_30_pop_mean = mean(wbgt_30_pop),
                    wbgt_35_pop_mean = mean(wbgt_35_pop)) %>%
@@ -121,6 +125,33 @@ dat.wbgt.summarised.merged.weighted.prison.5year.average = dat.wbgt.summarised.m
   dplyr::mutate(Type=as.factor(Type)) %>%
   dplyr::mutate(Type=factor(Type,levels=c('Federal','State','County','Local','Other')))
 ```
+
+## Take 5-year average of earliest 5 years
+```{r}
+dat.wbgt.summarised.merged.weighted.prison.first.5year.average = dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::filter(year%in%years_wbgtmax[c(1:5)]) %>%
+  dplyr::group_by(STATE,STATEFP,TYPE) %>%
+  dplyr::summarise(wbgt_26_mean = mean(wbgt_26),
+                   wbgt_28_mean = mean(wbgt_28),
+                   wbgt_30_mean = mean(wbgt_30),
+                   wbgt_35_mean = mean(wbgt_35),
+                   wbgt_26_pop_mean = mean(wbgt_26_pop),
+                   wbgt_28_pop_mean = mean(wbgt_28_pop),
+                   wbgt_30_pop_mean = mean(wbgt_30_pop),
+                   wbgt_35_pop_mean = mean(wbgt_35_pop)) %>%
+  dplyr::rename(Type=TYPE) %>%
+  dplyr::mutate(Type=case_when(Type=='COUNTY' ~ 'County',
+                               Type=='LOCAL' ~ 'Local',
+                               Type=='FEDERAL' ~ 'Federal',
+                               Type=='STATE' ~ 'State',
+                               TRUE ~ 'Other')) %>%
+  dplyr::mutate(Type=as.factor(Type)) %>%
+  dplyr::mutate(Type=factor(Type,levels=c('Federal','State','County','Local','Other')))
+
+# total number of person-days in first 5 years
+print(sum(dat.wbgt.summarised.merged.weighted.prison.first.5year.average$wbgt_28_pop_mean))
+```
+
 
 ## Plot barchart by state stacked by prison type
 ```{r}
@@ -237,24 +268,9 @@ plot.count.last.5.years.28 = plot_last_5_years(28,1)
 plot.count.last.5.years.30 = plot_last_5_years(30,1)
 ```
 
-## 26°C: Plot
-```{r}
-pdf(paste0(wbgtmax.folder,'Figure_1_26.pdf'),paper='a4r',width=0,height=0)
-plot_grid(plot.bar.chart.26, plot.count.last.5.years.26, 
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
-dev.off()
-
-plot_grid(plot.bar.chart.26, plot.count.last.5.years.26, 
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
-```
-
 ## 28°C: Plot
 ```{r}
-pdf(paste0(wbgtmax.folder,'Figure_1_28.pdf'),paper='a4r',width=0,height=0)
+pdf(paste0(wbgtmax.folder,'Figure_1.pdf'),paper='a4r',width=0,height=0)
 plot_grid(plot.bar.chart.28, plot.count.last.5.years.28, 
           label_size = 14 ,
           label_x = -0.02, label_y = 1,
@@ -267,20 +283,6 @@ plot_grid(plot.bar.chart.28, plot.count.last.5.years.28,
           labels = c('(a)', '(b)'))
 ```
 
-## 30°C: Plot
-```{r}
-pdf(paste0(wbgtmax.folder,'Figure_1_30.pdf'),paper='a4r',width=0,height=0)
-plot_grid(plot.bar.chart.30, plot.count.last.5.years.30, 
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
-dev.off()
-
-plot_grid(plot.bar.chart.30, plot.count.last.5.years.30, 
-          label_size = 14 ,
-          label_x = -0.02, label_y = 1,
-          labels = c('(a)', '(b)'))
-```
 
 ## Save output data for Figure 1a
 ```{r}

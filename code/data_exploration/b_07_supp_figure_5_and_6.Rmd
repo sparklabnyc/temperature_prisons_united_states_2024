@@ -1,0 +1,578 @@
+---
+title: "b_07_supp_figure_5_and_6"
+output: html_document
+date: "2024-02-14"
+---
+
+## First step to load packages and file locations etc.
+```{r include=FALSE}
+rm(list=ls())
+project.folder = paste0(print(here::here()),'/')
+source(paste0(project.folder,'create_folder_structure.R'))
+source(paste0(functions.folder,'script_initiate.R'))
+```
+
+## Load specific plotting packages
+```{r, message=FALSE}
+# load required packages
+library(data.table)
+library(maptools)
+library(mapproj)
+library(rgeos)
+library(rgdal)
+library(RColorBrewer)
+library(ggplot2)
+library(raster)
+library(sp)
+library(plyr)
+library(graticule)
+library(zoo)
+library(purrr)
+library(cowplot)
+```
+
+## Load WBGT regression file
+```{r}
+dat.wbgt.summarised.regression = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_regression_analysis.rds'))
+```
+
+## Prepare map structure
+```{r}
+# for map theme to plot in ggplot
+theme_map = function(base_size=9, base_family=""){
+    require(grid)
+    theme_bw(base_size=base_size,base_family=base_family) %+replace%
+    theme(axis.line=element_blank(),
+    axis.text=element_blank(),
+    axis.ticks=element_blank(),
+    axis.title=element_blank(),
+    panel.background=element_blank(),
+    panel.border=element_blank(),
+    panel.grid=element_blank(),
+    panel.margin=unit(0,"lines"),
+    plot.background=element_blank(),
+    legend.position = 'bottom'
+    )
+}
+```
+
+## Load US prison shapefile for mapping
+```{r}
+# load shapefile of entire United States by prison
+us.main = readOGR(dsn=paste0(project.folder,"data/shapefiles/Prison_Boundaries/"),
+                           layer="Prison_Boundaries_Edited")
+
+us.main = spTransform(us.main, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+# fortify to prepare for plotting in ggplot
+map = fortify(us.main)
+
+# extract data from shapefile
+us.main@data$id = rownames(us.main@data) 
+shapefile.data = us.main@data
+
+# fix the weird Alabama mistake
+shapefile.data = shapefile.data %>%
+  dplyr::mutate(STATEFP=case_when(STATEFP=='10' & STATE=='AL'~ '01',
+                               TRUE ~ STATEFP))
+
+# merge selected data to map_create dataframe for colouring of ggplot
+USA.df = merge(map, shapefile.data, by='id')
+USA.df$prison_id = as.integer(as.character(USA.df$FID))
+```
+
+## Load WBGT over time file
+```{r}
+dat.wbgt.summarised = readRDS(paste0(wbgt.folder,'weighted_area_raster_prison_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+```
+
+## Merge prison over time file with shapefile data then summarise by state and year weighted by prison population
+```{r}
+dat.wbgt.summarised.merged.weighted.prison.more.info = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
+  dplyr::filter(STATUS=='OPEN') %>% 
+  dplyr::filter(POPULATION > 0) 
+
+dat.wbgt.summarised.merged.weighted.prison = dat.wbgt.summarised.merged.weighted.prison.more.info %>%
+  dplyr::group_by(STATE,STATEFP,year) %>%
+  dplyr::summarise(wbgt_26 = weighted.mean(wbgt_26,POPULATION),
+            wbgt_28 = weighted.mean(wbgt_28,POPULATION),
+            wbgt_30 = weighted.mean(wbgt_30,POPULATION),
+            wbgt_35 = weighted.mean(wbgt_35,POPULATION)) 
+
+STATES = dat.wbgt.summarised.merged.weighted.prison %>% pull(STATE) %>% unique()
+
+dat.wbgt.summarised.merged.weighted.prison.national = left_join(dat.wbgt.summarised,shapefile.data, by=c('prison_id'='FID')) %>% 
+  dplyr::filter(STATUS=='OPEN') %>% 
+  dplyr::filter(POPULATION > 0) %>%
+  dplyr::group_by(year) %>%
+  dplyr::summarise(wbgt_26 = weighted.mean(wbgt_26,POPULATION),
+            wbgt_28 = weighted.mean(wbgt_28,POPULATION),
+            wbgt_30 = weighted.mean(wbgt_30,POPULATION),
+            wbgt_35 = weighted.mean(wbgt_35,POPULATION)) %>%
+  dplyr::mutate(STATE='USA',STATEFP='99') %>%
+  dplyr::relocate(STATE) %>%
+  dplyr::relocate(STATEFP)
+
+dat.wbgt.summarised.merged.weighted.prison = 
+  rbind(dat.wbgt.summarised.merged.weighted.prison,dat.wbgt.summarised.merged.weighted.prison.national) %>%
+  mutate(STATE=factor(STATE, levels=rev(c('USA',STATES))))
+```
+
+## Load state file over time
+```{r}
+dat.wbgt.summarised.merged.weighted.state = readRDS(paste0(wbgt.folder,'weighted_area_raster_state_wbgtmax_daily_',start_year_wbgt,'_',end_year_wbgt,'_over_time.rds'))
+```
+
+## Merge state-average prison vs. state to compare
+```{r}
+dat.wbgt.summarised.merged.weighted.prison = dat.wbgt.summarised.merged.weighted.prison %>%
+  dplyr::rename(wbgt_26_prison=wbgt_26,wbgt_28_prison=wbgt_28,wbgt_30_prison=wbgt_30,wbgt_35_prison=wbgt_35) %>%
+  dplyr::rename(state=STATEFP)
+
+dat.wbgt.summarised.merged.weighted.state = dat.wbgt.summarised.merged.weighted.state %>%
+  dplyr::rename(wbgt_26_state=wbgt_26,wbgt_28_state=wbgt_28,wbgt_30_state=wbgt_30,wbgt_35_state=wbgt_35)
+
+dat.wbgt.summarised.merged.weighted.prison.state = left_join(dat.wbgt.summarised.merged.weighted.prison,
+                                                             dat.wbgt.summarised.merged.weighted.state,
+                                                             by=c('state','year')) %>%
+  dplyr::mutate(wbgt_26_diff = wbgt_26_prison - wbgt_26_state,
+                wbgt_28_diff = wbgt_28_prison - wbgt_28_state,
+                wbgt_30_diff = wbgt_30_prison - wbgt_30_state,
+                wbgt_35_diff = wbgt_35_prison - wbgt_35_state)
+```
+
+
+## Merge individual prison vs. state to compare
+```{r}
+dat.wbgt.summarised.merged.individual.prison.state = dat.wbgt.summarised.merged.weighted.prison.more.info %>%
+  dplyr::select(prison_id, year, wbgt_26, wbgt_28, wbgt_30, wbgt_35, STATEFP) %>%
+  dplyr::rename(wbgt_26_prison=wbgt_26,wbgt_28_prison=wbgt_28,wbgt_30_prison=wbgt_30,wbgt_35_prison=wbgt_35) %>%
+  dplyr::rename(state=STATEFP) 
+
+dat.wbgt.summarised.merged.individual.prison.state = left_join(dat.wbgt.summarised.merged.individual.prison.state,
+                                                               dat.wbgt.summarised.merged.weighted.state,
+                                                               by=c('state','year')) %>%
+  dplyr::mutate(wbgt_26_diff = wbgt_26_prison - wbgt_26_state,
+                wbgt_28_diff = wbgt_28_prison - wbgt_28_state,
+                wbgt_30_diff = wbgt_30_prison - wbgt_30_state,
+                wbgt_35_diff = wbgt_35_prison - wbgt_35_state)
+```
+
+## Trends in growth of individual prison disparity per year over time
+```{r}
+dat.wbgt.summarised.regression.26 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_26_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_26=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_26=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_26,total_change_disparity_wbgt_26)
+
+dat.wbgt.summarised.regression.28 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_28_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_28=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_28=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_28,total_change_disparity_wbgt_28)
+
+dat.wbgt.summarised.regression.30 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_30_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_30=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_30=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_30,total_change_disparity_wbgt_30)
+
+dat.wbgt.summarised.regression.35 = dat.wbgt.summarised.merged.individual.prison.state %>%
+  dplyr::mutate(year=as.numeric(year)) %>%
+  dplyr::group_by(prison_id) %>%
+  do(broom::tidy(lm(wbgt_35_diff ~ year, data = .))) %>%
+  dplyr::filter(term=='year') %>%
+  dplyr::select(prison_id,estimate) %>%
+  dplyr::mutate(total_change_disparity_wbgt_35=estimate*(length(years_wbgtmax))) %>%
+  dplyr::rename(annual_change_disparity_wbgt_35=estimate) %>%
+  dplyr::select(prison_id,annual_change_disparity_wbgt_35,total_change_disparity_wbgt_35)
+```
+
+## Merge regression analyses into one data frame
+```{r}
+dat.wbgt.summarised.regression.merged = 
+  left_join(dat.wbgt.summarised.regression.26,dat.wbgt.summarised.regression.28) %>%
+  left_join(.,dat.wbgt.summarised.regression.30) %>%
+  left_join(.,dat.wbgt.summarised.regression.35)
+```
+
+## Load US state shapefile for mapping
+```{r}
+us = readOGR(dsn=paste0(data.folder,"shapefiles/states"),layer="states")
+
+# reproject shapefile
+us_aea = spTransform(us, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+us_aea = us
+us_aea@data$id = rownames(us_aea@data)
+
+# only keep mainland US States
+us_aea = us_aea[us_aea$STATE_FIPS %in% states_included,]
+us_aea = spTransform(us_aea, CRS("+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs"))
+
+us_aea = fortify(us_aea)
+```
+
+## Add disparity regression to other regression data
+```{r}
+dat.wbgt.summarised.regression = left_join(dat.wbgt.summarised.regression,
+                                           dat.wbgt.summarised.regression.merged)
+```
+
+## Prepare summary maps
+```{r}
+# merge map with mean values
+USA.df.merged = left_join(USA.df,dat.wbgt.summarised.regression,by='prison_id')
+USA.df.merged = with(USA.df.merged, USA.df.merged[order(id,order),])
+```
+
+## Prepare colors and legends of maps
+```{r}
+legend_create_count_start_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',start_year_wbgt))
+legend_create_count_end_year = function(threshold)(paste0('Number of dangerous hot-humid days\nin ',end_year_wbgt))
+legend_create_count_last_5_years = function(threshold)(paste0('Mean annual number of dangerous hot-humid days\nduring ',(end_year_wbgt-4),'-',end_year_wbgt))
+legend_create_annual_change = function(threshold)(paste0('Annual change during\n',start_year_wbgt,'-',end_year_wbgt ))
+legend_create_total_change = function(threshold)(paste0('Total change in annual number of\ndangerous hot-humid days during ',start_year_wbgt,'-',end_year_wbgt))
+legend_create_annual_disparity_change = function(threshold)(paste0('Annual change in disparity during\n',start_year_wbgt,'-',end_year_wbgt ))
+legend_create_total_disparity_change = function(threshold)(paste0('Total change in disparity of annual number of\ndangerous hot-humid days during ',start_year_wbgt,'-',end_year_wbgt))
+```
+
+## Only take open prisons and whose population we know
+```{r}
+USA.df.merged = USA.df.merged %>% 
+  filter(STATUS=='OPEN') %>% filter(POPULATION > 0) 
+```
+
+## Plot count in start year map 
+```{r}
+plot_start_year = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',start_year_wbgt))),size=1) +
+    scale_color_gradientn(colors=(MetBrewer::met.brewer('OKeeffe2')), limits = c(0,max(USA.df.merged$wbgt_28_1982))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    ggtitle(paste0(threshold_chosen,'°C')) + 
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text= element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        plot.title = element_text(hjust = 0.5),
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map() + 
+    theme(plot.title = element_text(hjust = 0.5))
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+          guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_start_year(threshold_chosen)),legend.text=element_text(size=5))  
+    }
+
+  return(p)
+}
+
+plot.count.start.year.legend = cowplot::get_legend(plot_start_year(26,1))
+
+plot.count.start.year.26 = plot_start_year(26,0)
+plot.count.start.year.28 = plot_start_year(28,0)
+plot.count.start.year.30 = plot_start_year(30,0)
+```
+
+## Plot count in end year map 
+```{r}
+plot_end_year = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('wbgt_',threshold_chosen,'_',end_year_wbgt))),size=1) +
+    scale_color_gradientn(colors=MetBrewer::met.brewer('OKeeffe2'), limits = c(0,max(USA.df.merged$wbgt_28_1982))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+          guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_end_year(threshold_chosen)),legend.text=element_text(size=5)) 
+    }  
+
+    return(p)
+
+}
+
+plot.count.end.year.legend = cowplot::get_legend(plot_end_year(26,1))
+
+plot.count.end.year.26 = plot_end_year(26,1)
+plot.count.end.year.28 = plot_end_year(28,1)
+plot.count.end.year.30 = plot_end_year(30,1)
+```
+
+## Plot total change map 
+```{r}
+library(MetBrewer)
+
+plot_total_change = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_wbgt_',threshold_chosen))),size=1) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Cassatt2')), limits = c(-1*max(USA.df.merged$total_change_wbgt_28),max(USA.df.merged$total_change_wbgt_28))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(), legend.text=element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+      guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_total_change(threshold_chosen)),legend.text=element_text(size=5))
+  }
+  
+  return(p)
+}
+
+plot.total.change.legend = cowplot::get_legend(plot_total_change(26,1))
+
+plot.total.change.26 = plot_total_change(26,1)
+plot.total.change.28 = plot_total_change(28,1)
+plot.total.change.30 = plot_total_change(30,1)
+```
+
+## Plot total change in disparity to state map 
+```{r}
+library(MetBrewer)
+
+plot_total_disparity_change = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,color=get(paste0('total_change_disparity_wbgt_',threshold_chosen))),size=1) +
+    scale_color_gradientn(colors=rev(MetBrewer::met.brewer('Isfahan1')), limits = c(-1*max(USA.df.merged$total_change_disparity_wbgt_28),max(USA.df.merged$total_change_disparity_wbgt_28))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(), legend.text=element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+      guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_total_disparity_change(threshold_chosen)),legend.text=element_text(size=5))
+  }
+  
+  return(p)
+}
+
+plot.total.disparity.change.legend = cowplot::get_legend(plot_total_disparity_change(26,1))
+
+plot.total.disparity.change.26 = plot_total_disparity_change(26,1)
+plot.total.disparity.change.28 = plot_total_disparity_change(28,1)
+plot.total.disparity.change.30 = plot_total_disparity_change(30,1)
+```
+
+## Plot count in last 5 years map 
+```{r}
+plot_last_5_years = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_polygon(data=us_aea,aes(x=long,y=lat,group=group),fill='grey35',color='black',size=0.5) +
+    geom_polygon(data=USA.df.merged,aes(x=long,y=lat,group=group,
+                                        color=get(paste0('wbgt_',threshold_chosen,'_',(end_year_wbgt-4),'_',end_year_wbgt))),size=1) +
+    scale_color_gradientn(colors=MetBrewer::met.brewer('OKeeffe2'), limits = c(0,max(USA.df.merged$wbgt_28_2016_2020))) +
+    coord_fixed() + xlab('') + ylab('') + theme_bw() +
+    theme(panel.grid.major = element_blank(),
+        axis.text.x = element_text(angle=90), axis.ticks.x=element_blank(),legend.text=element_text(size=5),
+        panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+        panel.border = element_rect(colour = "black"),strip.background = element_blank(),legend.justification='center',
+        legend.position = 'bottom', legend.background = element_rect(fill="white", size=.5, linetype="dotted")) +
+    theme_map()
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(color=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p +
+          guides(color = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10,barheight = 1,title.vjust = 0.8, 
+                                  title = legend_create_count_last_5_years(threshold_chosen)),legend.text=element_text(size=5)) 
+    }  
+
+    return(p)
+
+}
+
+plot.count.end.year.legend = cowplot::get_legend(plot_last_5_years(26,1))
+
+plot.count.last.5.years.26 = plot_last_5_years(26,1)
+plot.count.last.5.years.28 = plot_last_5_years(28,1)
+plot.count.last.5.years.30 = plot_last_5_years(30,1)
+```
+
+## Plot state-wide population-weighted annual difference
+```{r}
+plot_state_year_difference = function(threshold_chosen,legend_chosen=0){
+  p = ggplot() +
+    geom_tile(data=dat.wbgt.summarised.merged.weighted.prison.state,
+                 aes(x=year,y=STATE,fill=get(paste0('wbgt_',threshold_chosen,'_diff'))),size=1) +
+    guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
+                                 barheight = 1,title.vjust = 0.8,
+                                 title = "Difference in number of hot-humid days"),
+                                 legend.text=element_text(size=15)) +
+    xlab('Year') +
+    ylab('State') +
+    scale_fill_gradient2(low=met.brewer('Demuth')[10],mid='white',high=met.brewer('Demuth')[1],
+                         na.value="white",guide = guide_legend(nrow = 1)) +
+    theme_bw() + theme(text = element_text(size = 10),
+    panel.grid.major = element_blank(),axis.text.x = element_text(angle=90 , size=8, vjust=0.5),
+    plot.title = element_text(hjust = 0.5),panel.background = element_blank(),
+    panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    panel.border = element_rect(colour = "black"),strip.background = element_blank(),
+    legend.position = 'bottom',legend.justification='center',
+    legend.background = element_rect(fill="white", size=.5, linetype="dotted"))
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(fill=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p + 
+      guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
+                                 barheight = 1,title.vjust = 0.8,
+                                 title = "Population-weighted difference in annual number of\n hot-humid days between carceral facilities and rest of state"),legend.text=element_text(size=15))
+  }
+  
+  return(p)
+}
+
+plot.heatmap.legend = cowplot::get_legend(plot_state_year_difference(28,1))
+
+plot.state.year.diff.26 = plot_state_year_difference(26,1)
+plot.state.year.diff.28 = plot_state_year_difference(28,1)
+plot.state.year.diff.30 = plot_state_year_difference(30,1)
+```
+
+## Plot state-wide population-weighted annual difference sorted by average difference
+```{r}
+plot_state_year_difference_sorted = function(threshold_chosen,legend_chosen=0){
+  
+  dat.wbgt.summarised.merged.weighted.prison.state.sorted = dat.wbgt.summarised.merged.weighted.prison.state %>%
+    group_by(STATE) %>%
+    dplyr::mutate(mean = mean(get(paste0('wbgt_',threshold_chosen,'_diff')))) %>%
+    dplyr::arrange((mean)) %>%
+    ungroup() %>%
+    dplyr::mutate(STATE.sorted = forcats::fct_inorder(STATE, ordered=TRUE))
+    # dplyr::mutate(STATE.sorted = reorder(STATE, -get(paste0('wbgt_',threshold_chosen,'_diff')), FUN=mean))
+  
+  p = ggplot() +
+    geom_tile(data=dat.wbgt.summarised.merged.weighted.prison.state.sorted,
+                 aes(x=year,y=STATE.sorted,fill=get(paste0('wbgt_',threshold_chosen,'_diff'))),size=1) +
+    guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
+                                 barheight = 1,title.vjust = 0.8,
+                                 title = "Difference in number of hot-humid days"),
+                                 legend.text=element_text(size=15)) +
+    xlab('Year') +
+    ylab('State') +
+    ylim(levels(dat.wbgt.summarised.merged.weighted.prison.state.sorted$STATE.sorted)) +
+    scale_fill_gradient2(low=met.brewer('Demuth')[10],mid='white',high=met.brewer('Demuth')[1],
+                         na.value="white",guide = guide_legend(nrow = 1)) +
+    theme_bw() + theme(text = element_text(size = 10),
+    panel.grid.major = element_blank(),axis.text.x = element_text(angle=90 , size=8, vjust=0.5),
+    plot.title = element_text(hjust = 0.5),panel.background = element_blank(),
+    panel.grid.minor = element_blank(), axis.line = element_line(colour = "black"),
+    panel.border = element_rect(colour = "black"),strip.background = element_blank(),
+    legend.position = 'bottom',legend.justification='center',
+    legend.background = element_rect(fill="white", size=.5, linetype="dotted"))
+  
+  if(legend_chosen==0){
+    p = p +
+          guides(fill=FALSE)
+  }
+  if(legend_chosen==1){
+    p = p + 
+      guides(fill = guide_colorbar(direction = "horizontal", title.position="left",barwidth = 10, 
+                                 barheight = 1,title.vjust = 0.8,
+                                 title = "Population-weighted difference in annual number of\n hot-humid days between carceral facilities and rest of state"),legend.text=element_text(size=15))
+  }
+  
+  return(p)
+}
+
+plot.heatmap.legend = cowplot::get_legend(plot_state_year_difference_sorted(28,1))
+
+plot.state.year.diff.26.sorted = plot_state_year_difference_sorted(26,1)
+plot.state.year.diff.28.sorted = plot_state_year_difference_sorted(28,1)
+plot.state.year.diff.30.sorted = plot_state_year_difference_sorted(30,1)
+```
+
+## 26°C: Place arrangement of plots
+```{r}
+nested.26 = plot_grid(plot.total.change.26, plot.total.disparity.change.26,
+          nrow = 2,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(b)', '(c)'))
+
+plot.26 = plot_grid(plot.state.year.diff.26, nested.26,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'S_Figure_5.pdf'),paper='a4r',width=0,height=0)
+plot.26
+dev.off()
+
+plot.26
+```
+
+## 30°C: Place arrangement of plots
+```{r}
+nested.30 = plot_grid(plot.total.change.30, plot.total.disparity.change.30,
+          nrow = 2,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(b)', '(c)'))
+
+plot.30 = plot_grid(plot.state.year.diff.30, nested.30,
+          label_size = 14 ,
+          label_x = -0.02, label_y = 1,
+          labels = c('(a)'))
+
+pdf(paste0(wbgtmax.folder,'S_Figure_6.pdf'),paper='a4r',width=0,height=0)
+plot.30
+dev.off()
+
+plot.30
+```
+
