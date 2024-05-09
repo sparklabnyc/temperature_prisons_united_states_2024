@@ -3,7 +3,6 @@
 Cascade Tuholske, Victoria D. Lynch, Raenita Spriggs, Yoonjung Ahn, Colin Raymond, Anne E. Nigra, Robbie M. Parks\
 Nature Sustainability 2024.
 
-
 ## Project description
 
 This dataset and code is used for the paper 
